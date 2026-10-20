@@ -61,7 +61,7 @@
   </div>
 
   <script>
-    const socket = io("http://localhost:3000");
+    const socket = io();;
 
     socket.on('nuovo_ordine_cucina', (order) => {
       const grid = document.getElementById('ordersGrid');
