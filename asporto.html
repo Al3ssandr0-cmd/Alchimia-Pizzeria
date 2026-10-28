@@ -1,258 +1,261 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizzeria Alchimia - Ordina Online (Asporto & Domicilio)</title>
-  <style>
-    :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent: #f59e0b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --success: #10b981;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text); padding-bottom: 140px; }
-    header { background: #020617; padding: 20px; text-align: center; border-bottom: 2px solid var(--accent); }
-    header h1 { color: var(--accent); font-size: 2rem; }
-    .badge-asporto { display: inline-block; background: #38bdf8; color: #000; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; margin-top: 8px; }
-    .container { max-width: 600px; margin: 0 auto; padding: 15px; }
-    .section-title { font-size: 1.3rem; margin: 25px 0 10px; color: var(--accent); border-bottom: 1px solid #334155; padding-bottom: 5px; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alchimia Pizzeria - Ordine Asporto e Domicilio</title>
     
-    /* Box Dati Cliente */
-    .checkout-box { background: var(--card-bg); border: 1px solid #334155; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
-    .checkout-box h3 { color: var(--accent); font-size: 1.1rem; margin-bottom: 12px; }
-    .checkout-box label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
-    .checkout-box input, .checkout-box select, .checkout-box textarea { width: 100%; background: #0f172a; border: 1px solid #334155; color: var(--text); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: inherit; }
-    .checkout-box input:focus, .checkout-box select:focus, .checkout-box textarea:focus { outline: none; border-color: var(--accent); }
+    <!-- Stripe JS SDK (Necessario per gestire i pagamenti con carta) -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="/socket.io/socket.io.js"></script>
 
-    .product-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #334155; }
-    .product-card:hover { border-color: var(--accent); }
-    .product-info h3 { font-size: 1.1rem; }
-    .product-info p { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
-    .product-price { font-weight: bold; color: var(--accent); font-size: 1.1rem; }
-    
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
-    .modal { background: var(--card-bg); width: 100%; max-width: 500px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .modal h2 { color: var(--accent); margin-bottom: 5px; }
-    .ingredient-option { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #334155; }
-    .ingredient-option input { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; }
-    .btn { background: var(--accent); color: #000; border: none; padding: 14px; border-radius: 10px; font-weight: bold; width: 100%; font-size: 1rem; cursor: pointer; margin-top: 15px; }
-    .btn-close { background: #475569; color: var(--text); margin-top: 8px; }
-    
-    .cart-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #020617; border-top: 2px solid #334155; padding: 15px; display: flex; justify-content: space-between; align-items: center; z-index: 900; }
-    .cart-btn { background: var(--success); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-    .order-status-box { background: var(--card-bg); border: 1px solid var(--accent); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; text-align: center; }
-  </style>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        h1, h2, h3 { color: #333; }
+        .section {
+            background: #fff;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"], input[type="tel"], select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .radio-option {
+            margin-bottom: 8px;
+            font-weight: normal;
+            cursor: pointer;
+        }
+        #stripe-container {
+            border: 1px solid #007bff;
+            padding: 15px;
+            border-radius: 6px;
+            background-color: #f0f7ff;
+            margin-top: 15px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:hover { background-color: #218838; }
+        #card-errors {
+            color: #d9534f;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-  <header>
-    <h1>ALCHIMIA</h1>
-    <p>Servizio Ordini Online</p>
-    <div class="badge-asporto">🛵 ASPORTO & DOMICILIO</div>
-  </header>
+    <h1>🍕 Alchimia Pizzeria</h1>
 
-  <div class="container">
-    <div id="orderStatusBox" class="order-status-box">
-      <p style="font-size: 0.9rem; color: var(--text-muted);">Il tuo ordine:</p>
-      <h3 id="orderStatusText" style="color: var(--accent); margin-top: 5px;">In attesa di conferma...</h3>
+    <!-- 1. DATI CLIENTE -->
+    <div class="section">
+        <h2>Dati Cliente</h2>
+        <div class="form-group">
+            <label for="nome">Nome e Cognome</label>
+            <input type="text" id="nome" placeholder="Es. Mario Rossi" required>
+        </div>
+        <div class="form-group">
+            <label for="telefono">Telefono</label>
+            <input type="tel" id="telefono" placeholder="Es. 333 1234567" required>
+        </div>
     </div>
 
-    <!-- SEZIONE DATI CLIENTE (ASPORTO) -->
-    <div class="checkout-box">
-      <h3>📋 I tuoi dati per l'ordine</h3>
-      
-      <label>Tipo di Servizio:</label>
-      <select id="orderType" onchange="toggleAddressField()">
-        <option value="Asporto">Ritiro in Pizzeria (Asporto)</option>
-        <option value="Domicilio">Consegna a Domicilio</option>
-      </select>
+    <!-- 2. SCELTA TIPO ORDINE -->
+    <div class="section">
+        <h2>Modalità di Consegna</h2>
+        <label class="radio-option">
+            <input type="radio" name="tipo_ordine" value="asporto" checked onchange="gestisciTipoOrdine()">
+            🛍️ <strong>Ritiro in Pizzeria (Asporto)</strong> - Paga in cassa al ritiro
+        </label>
+        <br>
+        <label class="radio-option">
+            <input type="radio" name="tipo_ordine" value="domicilio" onchange="gestisciTipoOrdine()">
+            🛵 <strong>Consegna a Domicilio</strong> - Pagamento online obbligatorio
+        </label>
 
-      <label>Nome e Cognome *</label>
-      <input type="text" id="custName" placeholder="Es. Mario Rossi" required>
-
-      <label>Numero di Telefono *</label>
-      <input type="tel" id="custPhone" placeholder="Es. 3331234567" required>
-
-      <div id="addressContainer" style="display: none;">
-        <label>Indirizzo di Consegna (Via e Civico) *</label>
-        <input type="text" id="custAddress" placeholder="Es. Via Roma 15, Interno 3">
-      </div>
-
-      <label>Orario desiderato per il ritiro/consegna *</label>
-      <input type="time" id="custTime" required>
-
-      <label>Note o Intolleranze (opzionale)</label>
-      <textarea id="orderNotes" placeholder="Es. Senza cipolla, campanello rotto..." style="height: 60px; resize: none;"></textarea>
+        <!-- Campo Indirizzo (Inizialmente nascosto) -->
+        <div id="campo-indirizzo" class="form-group" style="display: none; margin-top: 15px;">
+            <label for="indirizzo">Indirizzo di Consegna</label>
+            <input type="text" id="indirizzo" placeholder="Via, Civico, Città">
+        </div>
     </div>
 
-    <!-- SEZIONE PIZZE -->
-    <div class="section-title">🍕 Le Nostre Pizze</div>
-    
-    <div class="product-card" onclick="openModal('Margherita Alchemica', 7.00, ['Doppia Mozzarella', 'Salame Piccante', 'Funghi'])">
-      <div class="product-info">
-        <h3>Margherita Alchemica</h3>
-        <p>Pomodoro San Marzano, Mozzarella, Basilico</p>
-      </div>
-      <div class="product-price">7.00 €</div>
+    <!-- 3. CARRELLO / TOTALE -->
+    <div class="section">
+        <h2>Totale Ordine</h2>
+        <p>Totale da pagare: <strong id="totale-mostrato">18.50 €</strong></p>
     </div>
 
-    <div class="product-card" onclick="openModal('Diavola Piccante', 8.50, ['Gorgonzola', 'Cipolla', 'Olive'])">
-      <div class="product-info">
-        <h3>Diavola Piccante</h3>
-        <p>Pomodoro, Mozzarella, Spianata Calabra</p>
-      </div>
-      <div class="product-price">8.50 €</div>
+    <!-- 4. MODULO STRIPE CARTA DI CREDITO (Visibile solo per Domicilio) -->
+    <div id="stripe-container" style="display: none;" class="section">
+        <h3>💳 Pagamento Sicuro con Carta</h3>
+        <p style="font-size: 0.9em; color: #555;">Inserisci i dati della carta per completare l'ordine a domicilio.</p>
+        <div id="payment-element">
+            <!-- Stripe caricherà qui i campi della carta -->
+        </div>
+        <div id="card-errors"></div>
     </div>
 
-    <!-- SEZIONE BEVANDE -->
-    <div class="section-title">🍺 Bevande</div>
-
-    <div class="product-card" onclick="openModal('Coca Cola 33cl', 3.00, [])">
-      <div class="product-info">
-        <h3>Coca Cola 33cl</h3>
-        <p>Bottiglia in vetro</p>
-      </div>
-      <div class="product-price">3.00 €</div>
+    <!-- 5. PULSANTE DI CONFERMA -->
+    <div class="section">
+        <button id="btn-conferma" onclick="confermaEInviaOrdine(event)">Invia Ordine</button>
     </div>
-  </div>
 
-  <div class="cart-bar">
-    <div>
-      <span style="font-size: 0.8rem; color: var(--text-muted);">Totale Ordine:</span>
-      <div id="cartTotal" style="font-weight: bold; font-size: 1.2rem; color: var(--accent);">0.00 €</div>
-    </div>
-    <button class="cart-btn" onclick="sendOrderToServer()">INVIA ORDINE</button>
-  </div>
+    <script>
+        const socket = io();
 
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <h2 id="modalTitle">Nome Prodotto</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;" id="modalSubtitle">Scegli gli ingredienti extra:</p>
-      <div id="ingredientsList"></div>
-      <button class="btn" onclick="addToCart()">Aggiungi all'Ordine</button>
-      <button class="btn btn-close" onclick="closeModal()">Annulla</button>
-    </div>
-  </div>
+        // CHIAVE PUBBLICA DI TEST DI STRIPE
+        // Quando Alchimia vi darà la sua chiave reale, sostituirete 'pk_test_...' con la sua pk_live_...
+        const stripe = Stripe('pk_test_51PxTESTKEY_SOSTITUISCI_CON_LA_TUA_PUBBLICA');
+        let elements;
+        let paymentElement;
 
-  <script>
-    const socket = io();
-    let cart = [];
-    let currentItem = null;
+        // Esempio importo totale carrello (in euro)
+        const totaleEuro = 18.50; 
 
-    function toggleAddressField() {
-      const type = document.getElementById('orderType').value;
-      const addressContainer = document.getElementById('addressContainer');
-      if (type === 'Domicilio') {
-        addressContainer.style.display = 'block';
-      } else {
-        addressContainer.style.display = 'none';
-      }
-    }
+        // Gestisce la visibilità in base a cosa sceglie il cliente
+        function gestisciTipoOrdine() {
+            const tipoOrdine = document.querySelector('input[name="tipo_ordine"]:checked').value;
+            const stripeContainer = document.getElementById('stripe-container');
+            const campoIndirizzo = document.getElementById('campo-indirizzo');
 
-    function openModal(name, basePrice, extras) {
-      currentItem = { name: name, basePrice: basePrice, price: basePrice, selectedExtras: [] };
-      document.getElementById('modalTitle').innerText = name;
-      
-      const listDiv = document.getElementById('ingredientsList');
-      listDiv.innerHTML = '';
-      
-      if (extras.length === 0) {
-        listDiv.innerHTML = '<p style="color: var(--text-muted); padding: 10px 0;">Nessun extra disponibile.</p>';
-      } else {
-        extras.forEach(extra => {
-          listDiv.innerHTML += `
-            <label class="ingredient-option">
-              <span>+ ${extra} (+1.50 €)</span>
-              <input type="checkbox" onchange="toggleExtra('${extra}', 1.50, this.checked)">
-            </label>
-          `;
-        });
-      }
-      document.getElementById('modalOverlay').style.display = 'flex';
-    }
+            if (tipoOrdine === 'domicilio') {
+                campoIndirizzo.style.display = 'block';
+                stripeContainer.style.display = 'block';
+                inizializzaStripe(); // Prepara il form di Stripe per la carta
+            } else {
+                campoIndirizzo.style.display = 'none';
+                stripeContainer.style.display = 'none'; // Nasconde completamente la carta per l'asporto
+            }
+        }
 
-    function toggleExtra(extraName, extraPrice, isChecked) {
-      if (isChecked) {
-        currentItem.selectedExtras.push(extraName);
-        currentItem.price += extraPrice;
-      } else {
-        currentItem.selectedExtras = currentItem.selectedExtras.filter(e => e !== extraName);
-        currentItem.price -= extraPrice;
-      }
-    }
+        // Inizializza il modulo di pagamento Stripe
+        async function inizializzaStripe() {
+            if (elements) return; // Evita di reinizializzare se già creato
 
-    function closeModal() {
-      document.getElementById('modalOverlay').style.display = 'none';
-    }
+            try {
+                const response = await fetch('/create-payment-intent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: totaleEuro })
+                });
+                
+                const data = await response.json();
 
-    function addToCart() {
-      cart.push({...currentItem});
-      updateCartDisplay();
-      closeModal();
-    }
+                if (data.error) {
+                    document.getElementById('card-errors').textContent = data.error;
+                    return;
+                }
 
-    function updateCartDisplay() {
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      document.getElementById('cartTotal').innerText = total.toFixed(2) + ' €';
-    }
+                elements = stripe.elements({ clientSecret: data.clientSecret });
+                paymentElement = elements.create('payment');
+                paymentElement.mount('#payment-element');
+            } catch (err) {
+                console.error("Errore durante il caricamento di Stripe:", err);
+                document.getElementById('card-errors').textContent = "Impossibile caricare il modulo di pagamento.";
+            }
+        }
 
-    function sendOrderToServer() {
-      if (cart.length === 0) {
-        alert('Seleziona prima almeno un prodotto!');
-        return;
-      }
+        // Funzione principale di invio dell'ordine
+        async function confermaEInviaOrdine(event) {
+            if (event) event.preventDefault();
 
-      const name = document.getElementById('custName').value.trim();
-      const phone = document.getElementById('custPhone').value.trim();
-      const orderType = document.getElementById('orderType').value;
-      const address = document.getElementById('custAddress').value.trim();
-      const reqTime = document.getElementById('custTime').value;
+            const nome = document.getElementById('nome').value.trim();
+            const telefono = document.getElementById('telefono').value.trim();
+            const tipoOrdine = document.querySelector('input[name="tipo_ordine"]:checked').value;
+            const indirizzo = document.getElementById('indirizzo').value.trim();
 
-      if (!name || !phone || !reqTime) {
-        alert('Compila tutti i campi obbligatori (Nome, Telefono e Orario)!');
-        return;
-      }
+            if (!nome || !telefono) {
+                alert("Per favore, inserisci nome e telefono.");
+                return;
+            }
 
-      if (orderType === 'Domicilio' && !address) {
-        alert('Inserisci l\'indirizzo per la consegna a domicilio!');
-        return;
-      }
+            const btn = document.getElementById('btn-conferma');
+            btn.disabled = true;
+            btn.textContent = "Elaborazione in corso...";
 
-      const orderData = {
-        id: 'ord_' + Date.now(),
-        table: orderType === 'Domicilio' ? '🏠 DOMICILIO' : '🛵 ASPORTO',
-        customer: {
-          name: name,
-          phone: phone,
-          address: address,
-          time: reqTime
-        },
-        items: cart,
-        notes: document.getElementById('orderNotes').value,
-        total: document.getElementById('cartTotal').innerText,
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      };
+            // --- CASO 1: ASPORTO (Paga di persona in cassa) ---
+            if (tipoOrdine === 'asporto') {
+                inviaOrdineSocket({
+                    nome,
+                    telefono,
+                    tipoOrdine: '🛍️ Asporto',
+                    indirizzo: 'Ritiro in Pizzeria',
+                    totale: totaleEuro,
+                    statoPagamento: '🔴 DA PAGARE IN CASSA'
+                });
+                return;
+            }
 
-      socket.emit('nuovo_ordine', orderData);
+            // --- CASO 2: DOMICILIO (Paga online con carta) ---
+            if (!indirizzo) {
+                alert("Per favore, inserisci l'indirizzo di consegna.");
+                btn.disabled = false;
+                btn.textContent = "Invia Ordine";
+                return;
+            }
 
-      const statusBox = document.getElementById('orderStatusBox');
-      const statusText = document.getElementById('orderStatusText');
-      statusBox.style.display = 'block';
-      statusText.innerText = 'Inviato alla pizzeria - In attesa';
+            // Elabora il pagamento con carta di credito
+            const { error, paymentIntent } = await stripe.confirmPayment({
+                elements,
+                confirmParams: { return_url: window.location.href },
+                redirect: 'if_required'
+            });
 
-      alert('✅ Ordine inviato con successo!');
-      cart = [];
-      updateCartDisplay();
-    }
+            if (error) {
+                document.getElementById('card-errors').textContent = error.message;
+                btn.disabled = false;
+                btn.textContent = "Invia Ordine";
+                return;
+            }
 
-    socket.on('aggiorna_stato_cliente', (data) => {
-      document.getElementById('orderStatusText').innerText = data.status;
-    });
-  </script>
+            // Se il pagamento è andato a buon fine
+            if (paymentIntent && paymentIntent.status === 'succeeded') {
+                inviaOrdineSocket({
+                    nome,
+                    telefono,
+                    tipoOrdine: '🛵 Domicilio',
+                    indirizzo: indirizzo,
+                    totale: totaleEuro,
+                    statoPagamento: '🟢 GIÀ PAGATO ONLINE (Carta)'
+                });
+            }
+        }
+
+        // Invio finale dell'ordine alla cucina tramite Socket.io
+        function inviaOrdineSocket(datiOrdine) {
+            socket.emit('nuovo-ordine', datiOrdine);
+            alert("✅ Ordine inviato con successo!");
+            window.location.reload(); // Ricarica la pagina per resettare il carrello
+        }
+    </script>
 </body>
 </html>
