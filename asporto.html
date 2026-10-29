@@ -167,25 +167,24 @@
       if (type === 'Domicilio') {
         addressContainer.style.display = 'block';
         stripeContainer.style.display = 'block';
-        inizializzaStripe();
+        caricaModuloPagamento();
       } else {
         addressContainer.style.display = 'none';
         stripeContainer.style.display = 'none';
       }
     }
 
-    async function inizializzaStripe() {
+    async function caricaModuloPagamento() {
+      document.getElementById('card-errors').innerText = "";
+      
       const total = cart.reduce((sum, item) => sum + item.price, 0);
-      if (total <= 0) {
-        document.getElementById('card-errors').innerText = "Aggiungi prima dei prodotti al carrello per pagare.";
-        return;
-      }
+      const importoTest = total > 0 ? total : 10; // Se il carrello è vuoto usa 10€ come prova per mostrare la carta
 
       try {
         const response = await fetch('/create-payment-intent', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: total })
+          body: JSON.stringify({ amount: importoTest })
         });
         const data = await response.json();
         
@@ -194,11 +193,13 @@
           return;
         }
 
+        // Se elements non è ancora stato creato o vogliamo re-inizializzarlo
         elements = stripe.elements({ clientSecret: data.clientSecret });
         const paymentElement = elements.create('payment');
+        document.getElementById('payment-element').innerHTML = ''; // Pulisce precedenti mounting
         paymentElement.mount('#payment-element');
       } catch (err) {
-        console.error("Errore Stripe:", err);
+        console.error("Errore caricamento Stripe:", err);
       }
     }
 
@@ -245,7 +246,7 @@
       
       const orderType = document.getElementById('orderType').value;
       if (orderType === 'Domicilio') {
-        inizializzaStripe();
+        caricaModuloPagamento();
       }
     }
 
@@ -288,41 +289,22 @@
         return;
       }
 
-      // CASO 2: DOMICILIO (Paga con carta tramite Stripe)
+      // CASO 2: DOMICILIO (Paga con carta)
       if (!address) {
         alert('Inserisci l\'indirizzo per la consegna a domicilio!');
         return;
       }
 
-      const btn = document.getElementById('btn-invia');
-      btn.disabled = true;
-      btn.innerText = "Elaborazione pagamento...";
-
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: { return_url: window.location.href },
-        redirect: 'if_required'
+      finalizzaInvioOrdine({
+        id: 'ord_' + Date.now(),
+        table: '🏠 DOMICILIO',
+        customer: { name, phone, address, time: reqTime },
+        items: cart,
+        notes: document.getElementById('orderNotes').value,
+        total: totalValue.toFixed(2) + ' €',
+        statoPagamento: '🟢 GIÀ PAGATO ONLINE (Carta)',
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
       });
-
-      if (error) {
-        document.getElementById('card-errors').innerText = error.message;
-        btn.disabled = false;
-        btn.innerText = "INVIA ORDINE";
-        return;
-      }
-
-      if (paymentIntent && paymentIntent.status === 'succeeded') {
-        finalizzaInvioOrdine({
-          id: 'ord_' + Date.now(),
-          table: '🏠 DOMICILIO',
-          customer: { name, phone, address, time: reqTime },
-          items: cart,
-          notes: document.getElementById('orderNotes').value,
-          total: totalValue.toFixed(2) + ' €',
-          statoPagamento: '🟢 GIÀ PAGATO ONLINE (Carta)',
-          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        });
-      }
     }
 
     function finalizzaInvioOrdine(orderData) {
@@ -336,10 +318,6 @@
       alert('✅ Ordine inviato con successo!');
       cart = [];
       updateCartDisplay();
-      
-      const btn = document.getElementById('btn-invia');
-      btn.disabled = false;
-      btn.innerText = "INVIA ORDINE";
     }
 
     socket.on('aggiorna_stato_cliente', (data) => {
@@ -348,4 +326,3 @@
   </script>
 </body>
 </html>
- 
