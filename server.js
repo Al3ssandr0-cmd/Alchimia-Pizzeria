@@ -1,51 +1,53 @@
 const express = require('express');
+const http = require('http');
+const { Server } = require('socket.io');
+const path = require('path');
+
 const app = express();
-const http = require('http').createServer(app);
-const io = require('socket.io')(http);
+const server = http.createServer(app);
+const io = new Server(server);
 
-// INIZIALIZZAZIONE STRIPE
-// Inseriamo una chiave di prova (TEST) generica. 
-// Quando il proprietario ti fornirà la sua chiave segreta reale (sk_live_...), 
-// dovrai solo sostituire la stringa qui sotto.
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_51PxTESTKEY_SOSTITUISCI_CON_LA_TUA';
-const stripe = require('stripe')(STRIPE_SECRET_KEY);
-
+// Middleware per leggere i dati JSON inviati dal frontend
 app.use(express.json());
-app.use(express.static(__dirname));
+app.use(express.urlencoded({ extended: true }));
 
-// ROTTA PER CREARE IL PAGAMENTO ONLINE CON STRIPE
+// Serve i file statici dalla cartella corrente (asporto.html, ecc.)
+app.use(express.static(path.join(__dirname)));
+
+// Rotta di simulazione pagamento Stripe (per testare senza chiavi reali)
 app.post('/create-payment-intent', async (req, res) => {
     try {
-        const { amount } = req.body; // Importo in Euro (es. 18.50)
-
-        // Stripe lavora in centesimi di Euro (es. 18.50€ -> 1850 centesimi)
-        const amountInCents = Math.round(parseFloat(amount) * 100);
-
-        const paymentIntent = await stripe.paymentIntents.create({
-            amount: amountInCents,
-            currency: 'eur',
-            automatic_payment_methods: { enabled: true },
+        // Restituisce un token fittizio per permettere il test immediato a domicilio
+        res.send({
+            clientSecret: 'pi_test_secret_mock_123456789'
         });
-
-        // Invia il clientSecret al client per completare la transazione sicura
-        res.json({ clientSecret: paymentIntent.client_secret });
-    } catch (error) {
-        console.error("Errore durante la creazione del PaymentIntent:", error.message);
-        res.status(500).json({ error: error.message });
+    } catch (err) {
+        res.status(500).send({ error: err.message });
     }
 });
 
-// GESTIONE SOCKET.IO PER L'INVIO DEGLI ORDINI IN CUCINA
+// Gestione della connessione in tempo reale con Socket.io (Cucina e Clienti)
 io.on('connection', (socket) => {
-    console.log('Un utente/dispositivo si è connesso');
+    console.log('Un utente si è connesso:', socket.id);
 
-    socket.on('nuovo-ordine', (ordine) => {
-        // Invia l'ordine in tempo reale al tablet/schermo della cucina
-        io.emit('ricevi-ordine', ordine);
+    // Ricezione di un nuovo ordine dal cliente
+    socket.on('nuovo_ordine', (orderData) => {
+        console.log('Nuovo ordine ricevuto:', orderData);
+        // Invia l'ordine a tutti i dispositivi connessi (es. la schermata della cucina)
+        io.emit('nuovo_ordine', orderData);
+    });
+
+    // Aggiornamento dello stato dell'ordine inviato dalla cucina al cliente
+    socket.on('aggiorna_stato', (data) => {
+        io.emit('aggiorna_stato_cliente', data);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Un utente si è disconnesso:', socket.id);
     });
 });
 
 const PORT = process.env.PORT || 3000;
-http.listen(PORT, () => {
-    console.log(`Server avviato e in ascolto sulla porta ${PORT}`);
+server.listen(PORT, () => {
+    console.log(`Server avviato sulla porta ${PORT}`);
 });
