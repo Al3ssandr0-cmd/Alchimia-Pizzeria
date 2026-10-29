@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizzeria Alchimia - Schermo Cucina</title>
+  <title>Pizzeria Alchimia - Display Cucina</title>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     :root {
       --bg-color: #0f172a;
@@ -12,116 +13,129 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --success: #10b981;
-      --danger: #ef4444;
-      --asporto: #38bdf8;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text); padding: 20px; }
-    header { background: #020617; padding: 15px 20px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--accent); margin-bottom: 20px; }
-    header h1 { color: var(--accent); font-size: 1.5rem; }
-    .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-    .order-card { background: var(--card-bg); border-radius: 12px; border: 1px solid #334155; border-left: 6px solid var(--accent); padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; flex-direction: column; justify-content: space-between; }
+    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 2px solid #334155; margin-bottom: 25px; }
+    h1 { color: var(--accent); font-size: 1.8rem; }
+    .status-badge { background: #334155; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; color: var(--success); font-weight: bold; }
     
-    /* Se è asporto/domicilio cambiamo il bordo sinistro in azzurro */
-    .order-card.is-delivery { border-left-color: var(--asporto); }
-
-    .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-    .order-table { font-weight: bold; color: var(--accent); font-size: 1.1rem; }
-    .order-card.is-delivery .order-table { color: var(--asporto); }
-    .order-time { color: var(--text-muted); font-size: 0.85rem; }
+    .grid-orders { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+    .order-card { background: var(--card-bg); border-radius: 12px; border: 1px solid #334155; padding: 18px; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
+    .order-type { font-weight: bold; font-size: 1.1rem; color: var(--accent); }
+    .order-time { font-size: 0.85rem; color: var(--text-muted); }
     
-    /* Box Dati Cliente Asporto */
-    .customer-box { background: #0b1329; border: 1px solid #334155; padding: 10px; border-radius: 8px; margin-bottom: 12px; font-size: 0.9rem; }
-    .customer-box a { color: var(--asporto); text-decoration: none; font-weight: bold; }
+    .customer-info { margin-bottom: 12px; font-size: 0.9rem; line-height: 1.4; color: #cbd5e1; }
+    .customer-info strong { color: var(--text); }
 
-    .order-items { margin-bottom: 15px; }
-    .item-row { margin-bottom: 8px; font-size: 1rem; }
-    .item-extras { font-size: 0.85rem; color: #cbd5e1; margin-left: 15px; margin-top: 2px; }
+    .items-list { margin: 12px 0; padding-left: 0; list-style: none; border-top: 1px dashed #334155; padding-top: 10px; }
+    .items-list li { margin-bottom: 8px; font-size: 1rem; }
+    .extras { display: block; font-size: 0.85rem; color: var(--accent); margin-left: 10px; }
+
+    .order-notes { background: #0f172a; border-left: 3px solid var(--accent); padding: 8px 10px; border-radius: 4px; font-size: 0.85rem; margin-bottom: 15px; color: #f1f5f9; }
     
-    .order-notes { background: #451a03; border: 1px solid #f59e0b; color: #fde68a; padding: 10px; border-radius: 8px; font-size: 0.9rem; margin-bottom: 15px; }
+    .payment-tag { display: inline-block; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; margin-bottom: 15px; }
+    .pay-cassa { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b; }
+    .pay-online { background: #10b98122; color: #10b981; border: 1px solid #10b981; }
 
-    .order-total { font-weight: bold; color: var(--success); font-size: 1.1rem; margin-bottom: 15px; text-align: right; }
-    .actions { display: flex; gap: 10px; }
-    .btn-prep { background: var(--accent); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; flex: 1; cursor: pointer; }
-    .btn-ready { background: var(--success); color: #fff; border: none; padding: 10px; border-radius: 8px; font-weight: bold; flex: 1; cursor: pointer; }
-    .btn-prep:hover, .btn-ready:hover { opacity: 0.9; }
-    .empty-message { text-align: center; color: var(--text-muted); grid-column: 1 / -1; margin-top: 50px; font-size: 1.2rem; }
+    .btn-status { width: 100%; background: var(--accent); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
+    .btn-status:hover { opacity: 0.9; }
+    .empty-msg { text-align: center; color: var(--text-muted); grid-column: 1 / -1; margin-top: 50px; font-size: 1.2rem; }
   </style>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
 
   <header>
-    <h1>🍳 CUCINA / DISPLAY ORDINI</h1>
-    <div id="connectionStatus" style="color: var(--success); font-weight: bold;">● Connesso</div>
+    <h1>👨‍🍳 Display Cucina - Pizzeria Alchimia</h1>
+    <div class="status-badge">🟢 Connesso al Server</div>
   </header>
 
-  <div class="orders-grid" id="ordersGrid">
-    <div class="empty-message" id="emptyMessage">In attesa di nuovi ordini...</div>
+  <div id="ordersContainer" class="grid-orders">
+    <div id="emptyMsg" class="empty-msg">In attesa di nuovi ordini...</div>
   </div>
 
   <script>
     const socket = io();
+    const ordiniRicevuti = new Set();
 
-    socket.on('nuovo_ordine_cucina', (order) => {
-      const grid = document.getElementById('ordersGrid');
-      const emptyMsg = document.getElementById('emptyMessage');
-      if (emptyMsg) emptyMsg.remove();
-
-      let itemsHtml = order.items.map(i => {
-        let extrasHtml = i.selectedExtras.length > 0 ? `<div class="item-extras">➕ Extra: ${i.selectedExtras.join(', ')}</div>` : '';
-        return `<div class="item-row">• <strong>${i.name}</strong> (${i.price.toFixed(2)} €)${extrasHtml}</div>`;
-      }).join('');
-
-      let notesHtml = order.notes && order.notes.trim() !== '' 
-        ? `<div class="order-notes"><strong>⚠️ NOTE:</strong><br>${order.notes}</div>` 
-        : '';
-
-      // Controlliamo se è un ordine d'asporto/domicilio con dati cliente
-      let customerHtml = '';
-      let isDeliveryClass = '';
-      if (order.customer) {
-        isDeliveryClass = 'is-delivery';
-        customerHtml = `
-          <div class="customer-box">
-            👤 <strong>${order.customer.name}</strong><br>
-            📞 <a href="tel:${order.customer.phone}">${order.customer.phone}</a><br>
-            ${order.customer.address ? `📍 ${order.customer.address}<br>` : ''}
-            ⏰ <strong>Orario richiesto: ${order.customer.time}</strong>
-          </div>
-        `;
-      }
-
-      const card = document.createElement('div');
-      card.className = `order-card ${isDeliveryClass}`;
-      card.id = order.id;
-      card.innerHTML = `
-        <div>
-          <div class="order-header">
-            <span class="order-table">${order.table}</span>
-            <span class="order-time">🕒 Inviato: ${order.time}</span>
-          </div>
-          ${customerHtml}
-          <div class="order-items">
-            ${itemsHtml}
-          </div>
-          ${notesHtml}
-          <div class="order-total">Totale: ${order.total}</div>
-        </div>
-        <div class="actions">
-          <button class="btn-prep" onclick="updateStatus('${order.id}', 'In preparazione')">In Preparazione</button>
-          <button class="btn-ready" onclick="updateStatus('${order.id}', 'Pronto 🍕')">Pronto 🚀</button>
-        </div>
-      `;
-
-      grid.prepend(card);
+    // 1. Riceve lo storico degli ordini esistenti appena si connette
+    socket.on('carica_ordini_esistenti', (ordini) => {
+      console.log("Ordini esistenti ricevuti:", ordini);
+      ordini.forEach(ordine => mostraOrdineInCucina(ordine));
     });
 
-    function updateStatus(orderId, status) {
-      socket.emit('aggiorna_stato', { id: orderId, status: status });
-      const card = document.getElementById(orderId);
+    // 2. Riceve in tempo reale ogni nuovo ordine inviato
+    socket.on('nuovo_ordine', (orderData) => {
+      console.log("Nuovo ordine in tempo reale:", orderData);
+      mostraOrdineInCucina(orderData);
+    });
+
+    function mostraOrdineInCucina(ordine) {
+      // Evita duplicati se l'ordine è già presente sullo schermo
+      if (ordiniRicevuti.has(ordine.id)) return;
+      ordiniRicevuti.add(ordine.id);
+
+      const emptyMsg = document.getElementById('emptyMsg');
+      if (emptyMsg) emptyMsg.style.display = 'none';
+
+      const container = document.getElementById('ordersContainer');
+      const isOnline = ordine.statoPagamento && ordine.statoPagamento.includes('GIÀ PAGATO');
+
+      let itemsHtml = '';
+      ordine.items.forEach(item => {
+        let extrasHtml = '';
+        if (item.selectedExtras && item.selectedExtras.length > 0) {
+          extrasHtml = `<span class="extras">+ ${item.selectedExtras.join(', ')}</span>`;
+        }
+        itemsHtml += `<li><strong>1x</strong> ${item.name} ${extrasHtml}</li>`;
+      });
+
+      const card = document.createElement('div');
+      card.className = 'order-card';
+      card.id = `card_${ordine.id}`;
+      card.innerHTML = `
+        <div class="order-header">
+          <div class="order-type">${ordine.table}</div>
+          <div class="order-time">Ore ${ordine.time || ''}</div>
+        </div>
+        
+        <div class="customer-info">
+          <div><strong>Cliente:</strong> ${ordine.customer.name}</div>
+          <div><strong>Tel:</strong> ${ordine.customer.phone}</div>
+          <div><strong>Orario rich:</strong> <span style="color: var(--accent); font-weight: bold;">${ordine.customer.time}</span></div>
+          ${ordine.customer.address ? `<div><strong>Indirizzo:</strong> ${ordine.customer.address}</div>` : ''}
+        </div>
+
+        <div class="payment-tag ${isOnline ? 'pay-online' : 'pay-cassa'}">
+          ${ordine.statoPagamento || 'DA VERIFICARE'}
+        </div>
+
+        <ul class="items-list">
+          ${itemsHtml}
+        </ul>
+
+        ${ordine.notes ? `<div class="order-notes"><strong>Note:</strong> ${ordine.notes}</div>` : ''}
+
+        <button class="btn-status" onclick="cambiaStato('${ordine.id}', 'In Preparazione')">
+          IN PREPARAZIONE ⏳
+        </button>
+      `;
+
+      container.prepend(card); // Mostra i nuovi ordini in alto
+    }
+
+    function cambiaStato(orderId, nuovoStato) {
+      socket.emit('aggiorna_stato', { orderId: orderId, status: nuovoStato });
+      const card = document.getElementById(`card_${orderId}`);
       if (card) {
-        card.style.borderLeftColor = 'var(--success)';
+        card.style.borderColor = 'var(--success)';
+        const btn = card.querySelector('.btn-status');
+        if (btn) {
+          btn.innerText = 'PRONTO / IN CONSEGNA ✅';
+          btn.style.background = 'var(--success)';
+          btn.style.color = '#fff';
+        }
       }
     }
   </script>
