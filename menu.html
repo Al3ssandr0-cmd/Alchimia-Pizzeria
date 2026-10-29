@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizzeria Alchimia - Menù Digitale</title>
+  <title>Pizzeria Alchimia - Menu</title>
+  <!-- Libreria Socket.io per comunicare in tempo reale con la cucina -->
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     :root {
       --bg-color: #0f172a;
@@ -14,251 +16,177 @@
       --success: #10b981;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text); padding-bottom: 140px; }
-    header { background: #020617; padding: 20px; text-align: center; border-bottom: 2px solid var(--accent); }
-    header h1 { color: var(--accent); font-size: 2rem; }
+    body { background-color: var(--bg-color); color: var(--text); padding: 20px; max-width: 800px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #334155; padding-bottom: 15px; }
+    h1 { color: var(--accent); font-size: 2rem; }
     
-    /* Box Inserimento Tavolo */
-    .table-selection-box { background: var(--card-bg); border: 1px solid #334155; padding: 12px 15px; border-radius: 12px; margin-top: 15px; display: inline-block; width: 100%; max-width: 320px; }
-    .table-selection-box label { font-size: 0.9rem; color: var(--accent); font-weight: bold; display: block; margin-bottom: 6px; }
-    .table-selection-box input { width: 100%; background: #0f172a; border: 1px solid #334155; color: var(--text); border-radius: 8px; padding: 8px 12px; font-size: 1rem; text-align: center; font-weight: bold; }
-    .table-selection-box input:focus { outline: none; border-color: var(--accent); }
-
-    .container { max-width: 600px; margin: 0 auto; padding: 15px; }
-    .section-title { font-size: 1.3rem; margin: 25px 0 10px; color: var(--accent); border-bottom: 1px solid #334155; padding-bottom: 5px; }
-    .product-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #334155; }
-    .product-card:hover { border-color: var(--accent); }
-    .product-info h3 { font-size: 1.1rem; }
-    .product-info p { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
-    .product-price { font-weight: bold; color: var(--accent); font-size: 1.1rem; }
+    .menu-section { margin-bottom: 30px; }
+    h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 15px; border-left: 4px solid var(--accent); padding-left: 10px; }
     
-    /* Box Note / Intolleranze */
-    .notes-section { background: var(--card-bg); border: 1px solid #334155; border-radius: 12px; padding: 15px; margin-top: 25px; }
-    .notes-section label { display: block; font-size: 0.95rem; color: var(--accent); margin-bottom: 8px; font-weight: bold; }
-    .notes-section textarea { width: 100%; background: #0f172a; border: 1px solid #334155; color: var(--text); border-radius: 8px; padding: 10px; resize: none; height: 70px; font-family: inherit; }
-    .notes-section textarea:focus { outline: none; border-color: var(--accent); }
+    .item-card { background: var(--card-bg); border-radius: 10px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+    .item-info h3 { font-size: 1.1rem; margin-bottom: 5px; }
+    .item-info p { font-size: 0.85rem; color: var(--text-muted); }
+    .item-price { font-size: 1.1rem; font-weight: bold; color: var(--success); }
+    
+    .btn-add { background: var(--accent); color: #000; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-add:hover { opacity: 0.9; }
 
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
-    .modal { background: var(--card-bg); width: 100%; max-width: 500px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .modal h2 { color: var(--accent); margin-bottom: 5px; }
-    .ingredient-option { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #334155; }
-    .ingredient-option input { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; }
-    .btn { background: var(--accent); color: #000; border: none; padding: 14px; border-radius: 10px; font-weight: bold; width: 100%; font-size: 1rem; cursor: pointer; margin-top: 15px; }
-    .btn-close { background: #475569; color: var(--text); margin-top: 8px; }
-    .cart-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #020617; border-top: 2px solid #334155; padding: 15px; display: flex; justify-content: space-between; align-items: center; z-index: 900; }
-    .cart-btn { background: var(--success); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-    .order-status-box { background: var(--card-bg); border: 1px solid var(--accent); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; text-align: center; }
+    /* Sezione Carrello e Invio */
+    .cart-box { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid #334155; margin-top: 40px; }
+    .cart-box h2 { border-left-color: var(--success); color: var(--success); }
+    
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: var(--text-muted); }
+    .form-group input, .form-group textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: var(--text); font-size: 1rem; }
+    
+    .btn-invia { width: 100%; background: var(--success); color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    .btn-invia:hover { opacity: 0.9; }
+    
+    #cartSummary { margin-bottom: 15px; font-size: 0.95rem; line-height: 1.6; border-bottom: 1px dashed #334155; padding-bottom: 10px; }
   </style>
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 </head>
 <body>
 
   <header>
-    <h1>ALCHIMIA</h1>
-    <p>Pizzeria & Cucina Artigianale</p>
-    
-    <!-- CAMPO PER INSERIRE IL NUMERO DI TAVOLO -->
-    <div class="table-selection-box">
-      <label for="tableNumber">🪑 Inserisci il numero del Tavolo *</label>
-      <input type="number" id="tableNumber" placeholder="Es. 5" min="1" max="99">
-    </div>
+    <h1>🍕 Pizzeria Alchimia</h1>
+    <p>Scegli la tua pizza e invia l'ordine direttamente</p>
   </header>
 
-  <div class="container">
-    <div id="orderStatusBox" class="order-status-box">
-      <p style="font-size: 0.9rem; color: var(--text-muted);">Il tuo ordine:</p>
-      <h3 id="orderStatusText" style="color: var(--accent); margin-top: 5px;">In attesa di conferma...</h3>
-    </div>
-
-    <!-- SEZIONE PIZZE -->
-    <div class="section-title">🍕 Le Nostre Pizze</div>
+  <div class="menu-section">
+    <h2>Le Nostre Pizze</h2>
     
-    <div class="product-card" onclick="openModal('Margherita Alchemica', 7.00, ['Doppia Mozzarella', 'Salame Piccante', 'Funghi'])">
-      <div class="product-info">
-        <h3>Margherita Alchemica</h3>
-        <p>Pomodoro San Marzano, Mozzarella, Basilico</p>
+    <div class="item-card">
+      <div class="item-info">
+        <h3>Margherita</h3>
+        <p>Pomodoro, fior di latte, basilico fresco, olio EVO</p>
       </div>
-      <div class="product-price">7.00 €</div>
+      <div class="item-price">€ 7.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('Margherita', 7.00)">Aggiungi</button>
     </div>
 
-    <div class="product-card" onclick="openModal('Diavola Piccante', 8.50, ['Gorgonzola', 'Cipolla', 'Olive'])">
-      <div class="product-info">
-        <h3>Diavola Piccante</h3>
-        <p>Pomodoro, Mozzarella, Spianata Calabra</p>
+    <div class="item-card">
+      <div class="item-info">
+        <h3>Diavola</h3>
+        <p>Pomodoro, fior di latte, salame piccante</p>
       </div>
-      <div class="product-price">8.50 €</div>
+      <div class="item-price">€ 8.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('Diavola', 8.50)">Aggiungi</button>
     </div>
 
-    <div class="product-card" onclick="openModal('Pizza 4 Formaggi', 9.00, ['Miele', 'Noci', 'Pomodorini'])">
-      <div class="product-info">
-        <h3>4 Formaggi</h3>
-        <p>Mozzarella, Gorgonzola, Fontina, Parmigiano</p>
+    <div class="item-card">
+      <div class="item-info">
+        <h3>Capricciosa</h3>
+        <p>Pomodoro, fior di latte, prosciutto cotto, funghi, carciofi, olive</p>
       </div>
-      <div class="product-price">9.00 €</div>
-    </div>
-
-    <!-- SEZIONE SFIZIOSITA' -->
-    <div class="section-title">🍟 Sfiziosità & Fritti</div>
-
-    <div class="product-card" onclick="openModal('Patatine Fritte', 4.00, ['Salsa Cheddar', 'Bacon Croccante'])">
-      <div class="product-info">
-        <h3>Patatine Fritte</h3>
-        <p>Patate fresche tagliate a mano</p>
-      </div>
-      <div class="product-price">4.00 €</div>
-    </div>
-
-    <div class="product-card" onclick="openModal('Crocchette di Patate (4pz)', 3.50, [])">
-      <div class="product-info">
-        <h3>Crocchette di Patate</h3>
-        <p>Fatte in casa con pepe nero e provola</p>
-      </div>
-      <div class="product-price">3.50 €</div>
-    </div>
-
-    <!-- SEZIONE BEVANDE -->
-    <div class="section-title">🍺 Bevande</div>
-
-    <div class="product-card" onclick="openModal('Coca Cola 33cl', 3.00, [])">
-      <div class="product-info">
-        <h3>Coca Cola 33cl</h3>
-        <p>Bottiglia in vetro</p>
-      </div>
-      <div class="product-price">3.00 €</div>
-    </div>
-
-    <div class="product-card" onclick="openModal('Birra Artigianale 0.4l', 6.00, [])">
-      <div class="product-info">
-        <h3>Birra Artigianale Bionda</h3>
-        <p>Spina 0.4l</p>
-      </div>
-      <div class="product-price">6.00 €</div>
-    </div>
-
-    <!-- CAMPO NOTE / INTOLLERANZE -->
-    <div class="notes-section">
-      <label for="orderNotes">⚠️ Note o Intolleranze (opzionale):</label>
-      <textarea id="orderNotes" placeholder="Es. No lattosio sulla Margherita, ben cotta la frittura..."></textarea>
+      <div class="item-price">€ 9.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('Capricciosa', 9.50)">Aggiungi</button>
     </div>
   </div>
 
-  <div class="cart-bar">
-    <div>
-      <span style="font-size: 0.8rem; color: var(--text-muted);">Totale Ordine:</span>
-      <div id="cartTotal" style="font-weight: bold; font-size: 1.2rem; color: var(--accent);">0.00 €</div>
-    </div>
-    <button class="cart-btn" onclick="sendOrderToServer()">INVIA ORDINE</button>
-  </div>
+  <div class="cart-box">
+    <h2>Il tuo Ordine</h2>
+    <div id="cartSummary">Nessun prodotto selezionato.</div>
 
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <h2 id="modalTitle">Nome Prodotto</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;" id="modalSubtitle">Scegli gli ingredienti extra:</p>
-      <div id="ingredientsList"></div>
-      <button class="btn" onclick="addToCart()">Aggiungi all'Ordine</button>
-      <button class="btn btn-close" onclick="closeModal()">Annulla</button>
+    <div class="form-group">
+      <label>Nome e Cognome</label>
+      <input type="text" id="custName" placeholder="Es. Mario Rossi" required>
     </div>
+
+    <div class="form-group">
+      <label>Numero di Telefono</label>
+      <input type="tel" id="custPhone" placeholder="Es. 3331234567" required>
+    </div>
+
+    <div class="form-group">
+      <label>Orario di ritiro/consegna desiderato</label>
+      <input type="text" id="custTime" placeholder="Es. 20:30" required>
+    </div>
+
+    <div class="form-group">
+      <label>Note per la cucina (es. pizza ben cotta)</label>
+      <textarea id="custNotes" rows="2" placeholder="Eventuali note..."></textarea>
+    </div>
+
+    <button class="btn-invia" onclick="inviaOrdineMenu()">INVIA ORDINE</button>
   </div>
 
   <script>
     const socket = io();
+    let carrelloCorrente = [];
 
-    let cart = [];
-    let currentItem = null;
+    function aggiungiAlCarrello(nome, prezzo) {
+      carrelloCorrente.push({ name: nome, price: prezzo, selectedExtras: [] });
+      aggiornaVistaCarrello();
+    }
 
-    function openModal(name, basePrice, extras) {
-      currentItem = { name: name, basePrice: basePrice, price: basePrice, selectedExtras: [] };
-      document.getElementById('modalTitle').innerText = name;
-      
-      const listDiv = document.getElementById('ingredientsList');
-      listDiv.innerHTML = '';
-      
-      if (extras.length === 0) {
-        listDiv.innerHTML = '<p style="color: var(--text-muted); padding: 10px 0;">Nessun extra disponibile per questo prodotto.</p>';
-      } else {
-        extras.forEach(extra => {
-          listDiv.innerHTML += `
-            <label class="ingredient-option">
-              <span>+ ${extra} (+1.50 €)</span>
-              <input type="checkbox" onchange="toggleExtra('${extra}', 1.50, this.checked)">
-            </label>
-          `;
-        });
+    function aggiornaVistaCarrello() {
+      const summary = document.getElementById('cartSummary');
+      if (carrelloCorrente.length === 0) {
+        summary.innerHTML = 'Nessun prodotto selezionato.';
+        return;
       }
-
-      document.getElementById('modalOverlay').style.display = 'flex';
+      
+      let html = '<ul>';
+      let totale = 0;
+      carrelloCorrente.forEach((item, index) => {
+        totale += item.price;
+        html += `<li>${item.name} - € ${item.price.toFixed(2)} <button style="color:red; background:none; border:none; cursor:pointer; margin-left:10px;" onclick="rimuoviItem(${index})">[rimuovi]</button></li>`;
+      });
+      html += `</ul><div style="margin-top:10px; font-weight:bold; color:var(--success);">Totale: € ${totale.toFixed(2)}</div>`;
+      summary.innerHTML = html;
     }
 
-    function toggleExtra(extraName, extraPrice, isChecked) {
-      if (isChecked) {
-        currentItem.selectedExtras.push(extraName);
-        currentItem.price += extraPrice;
-      } else {
-        currentItem.selectedExtras = currentItem.selectedExtras.filter(e => e !== extraName);
-        currentItem.price -= extraPrice;
-      }
+    function rimuoviItem(index) {
+      carrelloCorrente.splice(index, 1);
+      aggiornaVistaCarrello();
     }
 
-    function closeModal() {
-      document.getElementById('modalOverlay').style.display = 'none';
-    }
-
-    function addToCart() {
-      cart.push({...currentItem});
-      updateCartDisplay();
-      closeModal();
-    }
-
-    function updateCartDisplay() {
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      document.getElementById('cartTotal').innerText = total.toFixed(2) + ' €';
-    }
-
-    function sendOrderToServer() {
-      const tableNum = document.getElementById('tableNumber').value.trim();
-
-      // Controllo che il cliente abbia inserito il numero del tavolo
-      if (!tableNum) {
-        alert('⚠️ Per favore, inserisci il numero del tuo tavolo in cima alla pagina prima di inviare l\'ordine!');
-        document.getElementById('tableNumber').focus();
+    function inviaOrdineMenu() {
+      if (carrelloCorrente.length === 0) {
+        alert("Il carrello è vuoto! Aggiungi almeno una pizza.");
         return;
       }
 
-      if (cart.length === 0) {
-        alert('Seleziona prima almeno un prodotto dal menù!');
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      const time = document.getElementById('custTime').value.trim();
+      const notes = document.getElementById('custNotes').value.trim();
+
+      if (!name || !phone || !time) {
+        alert("Compila tutti i campi obbligatori (Nome, Telefono, Orario).");
         return;
       }
 
-      const now = new Date();
-      const timeString = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-      const userNotes = document.getElementById('orderNotes').value;
-
+      // Costruisce l'oggetto ordine strutturato esattamente come si aspetta la cucina
       const orderData = {
-        id: 'ord_' + Date.now(),
-        table: 'TAVOLO ' + tableNum, // <--- Formatta il tavolo inserito (es. TAVOLO 5)
-        items: cart,
-        notes: userNotes,
-        total: document.getElementById('cartTotal').innerText,
-        time: timeString
+        id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+        table: 'Asporto (da Menu)',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        items: carrelloCorrente,
+        customer: {
+          name: name,
+          phone: phone,
+          time: time,
+          address: ''
+        },
+        notes: notes,
+        statoPagamento: '🔴 DA PAGARE IN CASSA',
+        stato: 'In attesa di conferma'
       };
 
+      // Invia l'ordine al server tramite Socket.io
       socket.emit('nuovo_ordine', orderData);
 
-      const statusBox = document.getElementById('orderStatusBox');
-      const statusText = document.getElementById('orderStatusText');
-      statusBox.style.display = 'block';
-      statusText.innerText = 'Inviato alla cucina - In attesa';
-
-      alert('✅ Ordine per il TAVOLO ' + tableNum + ' inviato con successo!');
-      cart = [];
-      document.getElementById('orderNotes').value = '';
-      updateCartDisplay();
+      alert("✅ Ordine inviato con successo! Lo trovi subito sul display della cucina.");
+      
+      // Resetta il carrello
+      carrelloCorrente = [];
+      aggiornaVistaCarrello();
+      document.getElementById('custName').value = '';
+      document.getElementById('custPhone').value = '';
+      document.getElementById('custTime').value = '';
+      document.getElementById('custNotes').value = '';
     }
-
-    socket.on('aggiorna_stato_cliente', (data) => {
-      const statusText = document.getElementById('orderStatusText');
-      statusText.innerText = data.status;
-    });
   </script>
 </body>
 </html>
