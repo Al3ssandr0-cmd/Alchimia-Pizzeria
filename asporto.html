@@ -3,325 +3,462 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizzeria Alchimia - Ordina Online (Asporto & Domicilio)</title>
-  
-  <script src="https://js.stripe.com/v3/"></script>
+  <title>Pizzeria Alchimia - Ordini Asporto & Domicilio</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent: #f59e0b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --success: #10b981;
+      --bg-color: #3b0911;       /* Bordeaux scuro caldo */
+      --card-bg: #4f121b;        /* Bordeaux per i box */
+      --accent-gold: #f3d2a2;    /* Oro elegante */
+      --accent-light: #d4af37;   /* Oro brillante */
+      --text: #fdf8f2;           /* Bianco crema */
+      --text-muted: #d8b4bc;     /* Rosa/bordeaux desaturato */
+      --success: #22c55e;        /* Verde per conferme */
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text); padding-bottom: 140px; }
-    header { background: #020617; padding: 20px; text-align: center; border-bottom: 2px solid var(--accent); }
-    header h1 { color: var(--accent); font-size: 2rem; }
-    .badge-asporto { display: inline-block; background: #38bdf8; color: #000; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.85rem; margin-top: 8px; }
-    .container { max-width: 600px; margin: 0 auto; padding: 15px; }
-    .section-title { font-size: 1.3rem; margin: 25px 0 10px; color: var(--accent); border-bottom: 1px solid #334155; padding-bottom: 5px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Georgia', serif; }
+    body { background-color: var(--bg-color); color: var(--text); padding: 20px; max-width: 800px; margin: 0 auto; }
     
-    .checkout-box { background: var(--card-bg); border: 1px solid #334155; border-radius: 12px; padding: 15px; margin-bottom: 20px; }
-    .checkout-box h3 { color: var(--accent); font-size: 1.1rem; margin-bottom: 12px; }
-    .checkout-box label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
-    .checkout-box input, .checkout-box select, .checkout-box textarea { width: 100%; background: #0f172a; border: 1px solid #334155; color: var(--text); border-radius: 8px; padding: 10px; margin-bottom: 10px; font-family: inherit; }
-    .checkout-box input:focus, .checkout-box select:focus, .checkout-box textarea:focus { outline: none; border-color: var(--accent); }
-
-    .product-card { background: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border: 1px solid #334155; }
-    .product-card:hover { border-color: var(--accent); }
-    .product-info h3 { font-size: 1.1rem; }
-    .product-info p { color: var(--text-muted); font-size: 0.85rem; margin-top: 4px; }
-    .product-price { font-weight: bold; color: var(--accent); font-size: 1.1rem; }
+    header { text-align: center; margin-bottom: 35px; border-bottom: 2px solid var(--accent-light); padding-bottom: 20px; }
+    h1 { 
+      color: var(--accent-gold); 
+      font-size: 2.5rem; 
+      font-style: italic; 
+      letter-spacing: 1px; 
+      font-family: 'Palatino Linotype', 'Times New Roman', serif;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    header p { color: var(--text-muted); font-size: 1rem; margin-top: 5px; font-style: italic; }
     
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 15px; }
-    .modal { background: var(--card-bg); width: 100%; max-width: 500px; border-radius: 16px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-    .modal h2 { color: var(--accent); margin-bottom: 5px; }
-    .ingredient-option { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #334155; }
-    .ingredient-option input { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; }
-    .btn { background: var(--accent); color: #000; border: none; padding: 14px; border-radius: 10px; font-weight: bold; width: 100%; font-size: 1rem; cursor: pointer; margin-top: 15px; }
-    .btn-close { background: #475569; color: var(--text); margin-top: 8px; }
+    .menu-section { margin-bottom: 35px; }
+    h2 { font-size: 1.4rem; color: var(--accent-gold); margin-bottom: 15px; border-bottom: 1px solid var(--accent-light); padding-bottom: 5px; font-family: 'Segoe UI', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+    
+    .item-card { background: var(--card-bg); border-radius: 8px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #6b1f2d; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    .item-info h3 { font-size: 1.1rem; margin-bottom: 5px; color: var(--accent-gold); font-family: 'Segoe UI', sans-serif; }
+    .item-info p { font-size: 0.85rem; color: var(--text-muted); font-family: 'Segoe UI', sans-serif; }
+    .item-price { font-size: 1.15rem; font-weight: bold; color: var(--accent-gold); white-space: nowrap; margin-left: 15px; font-family: 'Segoe UI', sans-serif; }
+    
+    .btn-add { background: var(--accent-gold); color: #2d050c; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; white-space: nowrap; margin-left: 10px; font-family: 'Segoe UI', sans-serif; }
+    .btn-add:hover { background: var(--accent-light); }
 
-    /* Box Stripe */
-    #stripe-container { background: var(--card-bg); border: 1px solid var(--accent); border-radius: 12px; padding: 15px; margin-bottom: 20px; display: none; }
-    #card-errors { color: #f87171; margin-top: 8px; font-size: 0.9rem; font-weight: bold; }
+    /* Sezione Impasti, Carrello e Dati Cliente */
+    .cart-box { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 2px solid var(--accent-light); margin-top: 40px; font-family: 'Segoe UI', sans-serif; }
+    .cart-box h2 { border-bottom: none; color: var(--accent-gold); margin-bottom: 15px; font-size: 1.3rem; }
+    
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.95rem; margin-bottom: 8px; color: var(--accent-gold); font-weight: bold; }
+    .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #6b1f2d; background: #33060d; color: var(--text); font-size: 1rem; }
+    
+    /* Stile Radio Impasti e Servizio */
+    .radio-container { display: flex; flex-direction: column; gap: 10px; background: #33060d; padding: 15px; border-radius: 6px; border: 1px solid #6b1f2d; }
+    .radio-option { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+    .radio-option input { margin-top: 4px; accent-color: var(--accent-gold); cursor: pointer; }
+    .radio-label-title { font-weight: bold; color: var(--text); font-size: 0.95rem; }
+    .radio-label-desc { font-size: 0.8rem; color: var(--text-muted); }
 
-    .cart-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #020617; border-top: 2px solid #334155; padding: 15px; display: flex; justify-content: space-between; align-items: center; z-index: 900; }
-    .cart-btn { background: var(--success); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
-    .order-status-box { background: var(--card-bg); border: 1px solid var(--accent); padding: 15px; border-radius: 10px; margin-bottom: 20px; display: none; text-align: center; }
+    .btn-invia { width: 100%; background: var(--success); color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
+    .btn-invia:hover { opacity: 0.9; }
+    
+    #cartSummary { margin-bottom: 15px; font-size: 0.95rem; line-height: 1.6; border-bottom: 1px dashed #6b1f2d; padding-bottom: 10px; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>ALCHIMIA</h1>
-    <p>Servizio Ordini Online</p>
-    <div class="badge-asporto">🛵 ASPORTO & DOMICILIO</div>
+    <h1>Pizzeria Alchimia</h1>
+    <p>Elementi in evoluzione — Ordina Asporto & Domicilio</p>
   </header>
 
-  <div class="container">
-    <div id="orderStatusBox" class="order-status-box">
-      <p style="font-size: 0.9rem; color: var(--text-muted);">Il tuo ordine:</p>
-      <h3 id="orderStatusText" style="color: var(--accent); margin-top: 5px;">In attesa di conferma...</h3>
+  <!-- LE CLASSICHE -->
+  <div class="menu-section">
+    <h2>Le Classiche</h2>
+    
+    <div class="item-card">
+      <div class="item-info">
+        <h3>01 - Margherita</h3>
+        <p>Pomodoro, mozzarella, basilico</p>
+      </div>
+      <div class="item-price">€ 5.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('01 - Margherita', 5.00)">Aggiungi</button>
     </div>
 
-    <!-- SEZIONE DATI CLIENTE -->
-    <div class="checkout-box">
-      <h3>📋 I tuoi dati per l'ordine</h3>
-      
-      <label>Tipo di Servizio:</label>
-      <select id="orderType" onchange="toggleAddressField()">
-        <option value="Asporto">Ritiro in Pizzeria (Asporto - Paga in cassa)</option>
-        <option value="Domicilio">Consegna a Domicilio (Pagamento con Carta)</option>
-      </select>
+    <div class="item-card">
+      <div class="item-info">
+        <h3>02 - Margheritella</h3>
+        <p>Pomodoro, basilico, parmigiano grattugiato</p>
+      </div>
+      <div class="item-price">€ 5.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('02 - Margheritella', 5.50)">Aggiungi</button>
+    </div>
 
+    <div class="item-card">
+      <div class="item-info">
+        <h3>03 - Margherita senza lattosio</h3>
+        <p>Pomodoro, mozzarella senza lattosio</p>
+      </div>
+      <div class="item-price">€ 5.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('03 - Margherita senza lattosio', 5.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>04 - Napoli</h3>
+        <p>Pomodoro, mozzarella, acciughe, capperi, origano</p>
+      </div>
+      <div class="item-price">€ 6.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('04 - Napoli', 6.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>05 - Diavola</h3>
+        <p>Pomodoro, mozzarella, salamino piccante</p>
+      </div>
+      <div class="item-price">€ 6.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('05 - Diavola', 6.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>06 - Nuova 4 Stagioni</h3>
+        <p>Base pomodoro e mozzarella, divisa in 4 spicchi: Margherita, Basilico, Cotto e Funghi, Salame Piccante, Acciughe</p>
+      </div>
+      <div class="item-price">€ 7.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('06 - Nuova 4 Stagioni', 7.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>07 - Tonno e Cipolla</h3>
+        <p>Pomodoro, mozzarella, tonno, cipolla</p>
+      </div>
+      <div class="item-price">€ 7.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('07 - Tonno e Cipolla', 7.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>08 - Wurstel e Patatine</h3>
+        <p>Mozzarella, wurstel, patatine fritte</p>
+      </div>
+      <div class="item-price">€ 7.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('08 - Wurstel e Patatine', 7.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>09 - Capricciosa</h3>
+        <p>Pomodoro, mozzarella, prosciutto cotto, funghi</p>
+      </div>
+      <div class="item-price">€ 7.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('09 - Capricciosa', 7.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>10 - Calzone</h3>
+        <p>Pomodoro, mozzarella, prosciutto cotto, funghi</p>
+      </div>
+      <div class="item-price">€ 7.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('10 - Calzone', 7.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>11 - Porcini e Salsiccia</h3>
+        <p>Pomodoro, mozzarella, funghi porcini, salsiccia</p>
+      </div>
+      <div class="item-price">€ 8.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('11 - Porcini e Salsiccia', 8.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>12 - Ortolana</h3>
+        <p>Pomodoro, mozzarella, melanzane, zucchine, peperoni</p>
+      </div>
+      <div class="item-price">€ 7.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('12 - Ortolana', 7.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>13 - Completa</h3>
+        <p>Pomodoro, mozzarella, prosciutto cotto, capperi, funghi, carciofi</p>
+      </div>
+      <div class="item-price">€ 7.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('13 - Completa', 7.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>14 - Principessa</h3>
+        <p>Pomodoro, mozzarella, panna e crudo</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('14 - Principessa', 8.00)">Aggiungi</button>
+    </div>
+  </div>
+
+  <!-- LE SPECIALI -->
+  <div class="menu-section">
+    <h2>Le Speciali</h2>
+    
+    <div class="item-card">
+      <div class="item-info">
+        <h3>15 - Martinese</h3>
+        <p>Pomodoro, mozzarella, capocollo di Martina Franca, stracciatella</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('15 - Martinese', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>16 - Alchimia</h3>
+        <p>Mozzarella, mortadella, pesto di pistacchio, burrata</p>
+      </div>
+      <div class="item-price">€ 10.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('16 - Alchimia', 10.00)">Aggiungi</button>
+    </div>
+  </div>
+
+  <!-- LE BIANCHE & SFIZIOSE -->
+  <div class="menu-section">
+    <h2>Le Bianche & Sfiziose</h2>
+    
+    <div class="item-card">
+      <div class="item-info">
+        <h3>17 - Bufalina</h3>
+        <p>Senza pomodoro, mozzarella, mozzarella di bufala fresca</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('17 - Bufalina', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>18 - 4 Formaggi</h3>
+        <p>Mozzarella, gorgonzola, emmental, fontina</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('18 - 4 Formaggi', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>19 - Fumè</h3>
+        <p>Speck e scamorza</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('19 - Fumè', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>20 - Bresaola e Rucola</h3>
+        <p>Bresaola, rucola, scaglie di grana, citronette</p>
+      </div>
+      <div class="item-price">€ 8.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('20 - Bresaola e Rucola', 8.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>21 - Furore</h3>
+        <p>Mozzarella, tonno, scamorza affumicata</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('21 - Furore', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>22 - Fresca</h3>
+        <p>Mozzarella, pomodorini freschi, scaglie di grana, funghi (tutto in uscita)</p>
+      </div>
+      <div class="item-price">€ 7.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('22 - Fresca', 7.50)">Aggiungi</button>
+    </div>
+  </div>
+
+  <!-- SEZIONE CARRELLO & DATI CONSEGNA -->
+  <div class="cart-box">
+    <h2>Il tuo Ordine</h2>
+    <div id="cartSummary">Nessun prodotto selezionato.</div>
+
+    <!-- TIPO DI SERVIZIO -->
+    <div class="form-group">
+      <label>Modalità di Consegna / Ritiro *</label>
+      <div class="radio-container">
+        <label class="radio-option">
+          <input type="radio" name="tipoServizio" value="Asporto" checked onclick="gestisciCampoIndirizzo()">
+          <div>
+            <div class="radio-label-title">📦 Asporto (Ritiro in Pizzeria)</div>
+            <div class="radio-label-desc">Passi tu a ritirare all'orario stabilito</div>
+          </div>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="tipoServizio" value="Domicilio" onclick="gestisciCampoIndirizzo()">
+          <div>
+            <div class="radio-label-title">🛵 Domicilio (Consegna a casa)</div>
+            <div class="radio-label-desc">Consegniamo direttamente al tuo indirizzo</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- SCELTA IMPASTO -->
+    <div class="form-group">
+      <label>Scegli il Tipo di Impasto</label>
+      <div class="radio-container">
+        <label class="radio-option">
+          <input type="radio" name="tipoImpasto" value="Impasto Alchimia (Speciale)" checked>
+          <div>
+            <div class="radio-label-title">Impasto Alchimia</div>
+            <div class="radio-label-desc">Mix di Farina 1 e grano antico macinato a pietra</div>
+          </div>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="tipoImpasto" value="Impasto Classico">
+          <div>
+            <div class="radio-label-title">Impasto Classico</div>
+            <div class="radio-label-desc">Tradizionale a lievitazione naturale</div>
+          </div>
+        </label>
+        <label class="radio-option">
+          <input type="radio" name="tipoImpasto" value="Impasto Integrale">
+          <div>
+            <div class="radio-label-title">Impasto Integrale</div>
+            <div class="radio-label-desc">Ricco di fibre e leggero</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- DATI CLIENTE -->
+    <div class="form-group">
       <label>Nome e Cognome *</label>
       <input type="text" id="custName" placeholder="Es. Mario Rossi" required>
+    </div>
 
+    <div class="form-group">
       <label>Numero di Telefono *</label>
-      <input type="tel" id="custPhone" placeholder="Es. 3331234567" required>
+      <input type="tel" id="custPhone" placeholder="Es. 333 1234567" required>
+    </div>
 
-      <div id="addressContainer" style="display: none;">
-        <label>Indirizzo di Consegna (Via e Civico) *</label>
-        <input type="text" id="custAddress" placeholder="Es. Via Roma 15, Interno 3">
-      </div>
+    <div class="form-group" id="groupIndirizzo" style="display: none;">
+      <label>Indirizzo e Civico per il Domicilio *</label>
+      <input type="text" id="custAddress" placeholder="Es. Via Roma 15, Piano 2">
+    </div>
 
-      <label>Orario desiderato per il ritiro/consegna *</label>
+    <div class="form-group">
+      <label>Orario Desiderato (Ritiro/Consegna) *</label>
       <input type="time" id="custTime" required>
-
-      <label>Note o Intolleranze (opzionale)</label>
-      <textarea id="orderNotes" placeholder="Es. Senza cipolla, campanello rotto..." style="height: 60px; resize: none;"></textarea>
     </div>
 
-    <!-- SEZIONE STRIPE -->
-    <div id="stripe-container">
-      <h3 style="color: var(--accent); margin-bottom: 10px;">💳 Pagamento con Carta</h3>
-      <div id="payment-element"></div>
-      <div id="card-errors"></div>
+    <div class="form-group">
+      <label>Note per la cucina</label>
+      <textarea id="custNotes" rows="2" placeholder="Richieste speciali o intolleranze..."></textarea>
     </div>
 
-    <!-- SEZIONE PIZZE -->
-    <div class="section-title">🍕 Le Nostre Pizze</div>
-    
-    <div class="product-card" onclick="openModal('Margherita Alchemica', 7.00, ['Doppia Mozzarella', 'Salame Piccante', 'Funghi'])">
-      <div class="product-info">
-        <h3>Margherita Alchemica</h3>
-        <p>Pomodoro San Marzano, Mozzarella, Basilico</p>
-      </div>
-      <div class="product-price">7.00 €</div>
-    </div>
-
-    <div class="product-card" onclick="openModal('Diavola Piccante', 8.50, ['Gorgonzola', 'Cipolla', 'Olive'])">
-      <div class="product-info">
-        <h3>Diavola Piccante</h3>
-        <p>Pomodoro, Mozzarella, Spianata Calabra</p>
-      </div>
-      <div class="product-price">8.50 €</div>
-    </div>
-
-    <!-- SEZIONE BEVANDE -->
-    <div class="section-title">🍺 Bevande</div>
-
-    <div class="product-card" onclick="openModal('Coca Cola 33cl', 3.00, [])">
-      <div class="product-info">
-        <h3>Coca Cola 33cl</h3>
-        <p>Bottiglia in vetro</p>
-      </div>
-      <div class="product-price">3.00 €</div>
-    </div>
-  </div>
-
-  <div class="cart-bar">
-    <div>
-      <span style="font-size: 0.8rem; color: var(--text-muted);">Totale Ordine:</span>
-      <div id="cartTotal" style="font-weight: bold; font-size: 1.2rem; color: var(--accent);">0.00 €</div>
-    </div>
-    <button class="cart-btn" id="btn-invia" onclick="sendOrderToServer()">INVIA ORDINE</button>
-  </div>
-
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <h2 id="modalTitle">Nome Prodotto</h2>
-      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;" id="modalSubtitle">Scegli gli ingredienti extra:</p>
-      <div id="ingredientsList"></div>
-      <button class="btn" onclick="addToCart()">Aggiungi all'Ordine</button>
-      <button class="btn btn-close" onclick="closeModal()">Annulla</button>
-    </div>
+    <button type="button" class="btn-invia" id="btnInviaOrdine">INVIA ORDINE IN CUCINA</button>
   </div>
 
   <script>
     const socket = io();
-    const stripe = Stripe('pk_test_51PxTESTKEY_SOSTITUISCI_CON_LA_TUA');
-    let elements;
-    let cart = [];
-    let currentItem = null;
+    let carrelloCorrente = [];
 
-    function toggleAddressField() {
-      const type = document.getElementById('orderType').value;
-      const addressContainer = document.getElementById('addressContainer');
-      const stripeContainer = document.getElementById('stripe-container');
-
-      if (type === 'Domicilio') {
-        addressContainer.style.display = 'block';
-        stripeContainer.style.display = 'block';
-        caricaModuloPagamento();
+    function gestisciCampoIndirizzo() {
+      const tipo = document.querySelector('input[name="tipoServizio"]:checked').value;
+      const boxIndirizzo = document.getElementById('groupIndirizzo');
+      if (tipo === 'Domicilio') {
+        boxIndirizzo.style.display = 'block';
       } else {
-        addressContainer.style.display = 'none';
-        stripeContainer.style.display = 'none';
+        boxIndirizzo.style.display = 'none';
       }
     }
 
-    async function caricaModuloPagamento() {
-      document.getElementById('card-errors').innerText = "";
+    function aggiungiAlCarrello(nome, prezzo) {
+      carrelloCorrente.push({ name: nome, price: prezzo, selectedExtras: [] });
+      aggiornaVistaCarrello();
+    }
+
+    function aggiornaVistaCarrello() {
+      const summary = document.getElementById('cartSummary');
+      if (carrelloCorrente.length === 0) {
+        summary.innerHTML = 'Nessun prodotto selezionato.';
+        return;
+      }
       
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      const importoTest = total > 0 ? total : 10; // Se il carrello è vuoto usa 10€ come prova per mostrare la carta
-
-      try {
-        const response = await fetch('/create-payment-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: importoTest })
-        });
-        const data = await response.json();
-        
-        if (data.error) {
-          document.getElementById('card-errors').innerText = data.error;
-          return;
-        }
-
-        // Se elements non è ancora stato creato o vogliamo re-inizializzarlo
-        elements = stripe.elements({ clientSecret: data.clientSecret });
-        const paymentElement = elements.create('payment');
-        document.getElementById('payment-element').innerHTML = ''; // Pulisce precedenti mounting
-        paymentElement.mount('#payment-element');
-      } catch (err) {
-        console.error("Errore caricamento Stripe:", err);
-      }
+      let html = '<ul>';
+      let totale = 0;
+      carrelloCorrente.forEach((item, index) => {
+        totale += item.price;
+        html += `<li style="margin-bottom: 5px;">${item.name} - € ${item.price.toFixed(2)} <button style="color:#ff6b6b; background:none; border:none; cursor:pointer; margin-left:10px;" onclick="rimuoviItem(${index})">[rimuovi]</button></li>`;
+      });
+      html += `</ul><div style="margin-top:10px; font-weight:bold; color:var(--accent-gold);">Totale: € ${totale.toFixed(2)}</div>`;
+      summary.innerHTML = html;
     }
 
-    function openModal(name, basePrice, extras) {
-      currentItem = { name: name, basePrice: basePrice, price: basePrice, selectedExtras: [] };
-      document.getElementById('modalTitle').innerText = name;
-      
-      const listDiv = document.getElementById('ingredientsList');
-      listDiv.innerHTML = '';
-      
-      if (extras.length === 0) {
-        listDiv.innerHTML = '<p style="color: var(--text-muted); padding: 10px 0;">Nessun extra disponibile.</p>';
-      } else {
-        extras.forEach(extra => {
-          listDiv.innerHTML += `
-            <label class="ingredient-option">
-              <span>+ ${extra} (+1.50 €)</span>
-              <input type="checkbox" onchange="toggleExtra('${extra}', 1.50, this.checked)">
-            </label>
-          `;
-        });
-      }
-      document.getElementById('modalOverlay').style.display = 'flex';
+    function rimuoviItem(index) {
+      carrelloCorrente.splice(index, 1);
+      aggiornaVistaCarrello();
     }
 
-    function toggleExtra(extraName, extraPrice, isChecked) {
-      if (isChecked) {
-        currentItem.selectedExtras.push(extraName);
-        currentItem.price += extraPrice;
-      } else {
-        currentItem.selectedExtras = currentItem.selectedExtras.filter(e => e !== extraName);
-        currentItem.price -= extraPrice;
-      }
-    }
-
-    function closeModal() {
-      document.getElementById('modalOverlay').style.display = 'none';
-    }
-
-    function addToCart() {
-      cart.push({...currentItem});
-      updateCartDisplay();
-      closeModal();
-      
-      const orderType = document.getElementById('orderType').value;
-      if (orderType === 'Domicilio') {
-        caricaModuloPagamento();
-      }
-    }
-
-    function updateCartDisplay() {
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      document.getElementById('cartTotal').innerText = total.toFixed(2) + ' €';
-    }
-
-    async function sendOrderToServer() {
-      if (cart.length === 0) {
-        alert('Seleziona prima almeno un prodotto!');
+    document.getElementById('btnInviaOrdine').addEventListener('click', function() {
+      if (carrelloCorrente.length === 0) {
+        alert("Il carrello è vuoto! Aggiungi almeno una pizza.");
         return;
       }
 
+      const servizio = document.querySelector('input[name="tipoServizio"]:checked').value;
       const name = document.getElementById('custName').value.trim();
       const phone = document.getElementById('custPhone').value.trim();
-      const orderType = document.getElementById('orderType').value;
       const address = document.getElementById('custAddress').value.trim();
-      const reqTime = document.getElementById('custTime').value;
+      const time = document.getElementById('custTime').value;
+      const notes = document.getElementById('custNotes').value.trim();
+      const impastoSelezionato = document.querySelector('input[name="tipoImpasto"]:checked').value;
 
-      if (!name || !phone || !reqTime) {
-        alert('Compila tutti i campi obbligatori (Nome, Telefono e Orario)!');
+      if (!name || !phone || !time) {
+        alert("Compila tutti i campi obbligatori (Nome, Telefono e Orario)!");
         return;
       }
 
-      const totalValue = cart.reduce((sum, item) => sum + item.price, 0);
-
-      // CASO 1: ASPORTO (Paga in cassa)
-      if (orderType === 'Asporto') {
-        finalizzaInvioOrdine({
-          id: 'ord_' + Date.now(),
-          table: '🛵 ASPORTO',
-          customer: { name, phone, address: 'Ritiro in Pizzeria', time: reqTime },
-          items: cart,
-          notes: document.getElementById('orderNotes').value,
-          total: totalValue.toFixed(2) + ' €',
-          statoPagamento: '🔴 DA PAGARE IN CASSA',
-          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        });
+      if (servizio === 'Domicilio' && !address) {
+        alert("Inserisci l'indirizzo per la consegna a domicilio!");
         return;
       }
 
-      // CASO 2: DOMICILIO (Paga con carta)
-      if (!address) {
-        alert('Inserisci l\'indirizzo per la consegna a domicilio!');
-        return;
-      }
+      const noteFinali = `Impasto: ${impastoSelezionato}${notes ? ' - Note: ' + notes : ''}`;
 
-      finalizzaInvioOrdine({
-        id: 'ord_' + Date.now(),
-        table: '🏠 DOMICILIO',
-        customer: { name, phone, address, time: reqTime },
-        items: cart,
-        notes: document.getElementById('orderNotes').value,
-        total: totalValue.toFixed(2) + ' €',
-        statoPagamento: '🟢 GIÀ PAGATO ONLINE (Carta)',
-        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-      });
-    }
+      const orderData = {
+        id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
+        table: `${servizio.toUpperCase()} - ${name}`,
+        time: time,
+        items: carrelloCorrente,
+        customer: {
+          name: name,
+          phone: phone,
+          time: time,
+          address: servizio === 'Domicilio' ? address : 'Ritiro in Pizzeria'
+        },
+        notes: noteFinali,
+        statoPagamento: '🔴 DA PAGARE',
+        stato: 'In attesa di conferma'
+      };
 
-    function finalizzaInvioOrdine(orderData) {
       socket.emit('nuovo_ordine', orderData);
 
-      const statusBox = document.getElementById('orderStatusBox');
-      const statusText = document.getElementById('orderStatusText');
-      statusBox.style.display = 'block';
-      statusText.innerText = 'Inviato alla pizzeria - In attesa';
+      alert("✅ Ordine inviato con successo alla cucina!");
 
-      alert('✅ Ordine inviato con successo!');
-      cart = [];
-      updateCartDisplay();
-    }
-
-    socket.on('aggiorna_stato_cliente', (data) => {
-      document.getElementById('orderStatusText').innerText = data.status;
+      // Resetta il carrello e il modulo
+      carrelloCorrente = [];
+      aggiornaVistaCarrello();
+      document.getElementById('custName').value = '';
+      document.getElementById('custPhone').value = '';
+      document.getElementById('custAddress').value = '';
+      document.getElementById('custTime').value = '';
+      document.getElementById('custNotes').value = '';
     });
   </script>
 </body>
