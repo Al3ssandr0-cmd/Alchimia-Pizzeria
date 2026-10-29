@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizzeria Alchimia - Menu</title>
-  <!-- Libreria Socket.io per comunicare in tempo reale con la cucina -->
+  <title>Pizzeria Alchimia - Menu Online</title>
+  <!-- Socket.io -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     :root {
@@ -31,7 +31,7 @@
     .btn-add { background: var(--accent); color: #000; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .btn-add:hover { opacity: 0.9; }
 
-    /* Sezione Carrello e Invio */
+    /* Sezione Carrello */
     .cart-box { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid #334155; margin-top: 40px; }
     .cart-box h2 { border-left-color: var(--success); color: var(--success); }
     
@@ -49,7 +49,7 @@
 
   <header>
     <h1>🍕 Pizzeria Alchimia</h1>
-    <p>Scegli la tua pizza e invia l'ordine direttamente</p>
+    <p>Ordina direttamente dal menu</p>
   </header>
 
   <div class="menu-section">
@@ -88,31 +88,37 @@
     <div id="cartSummary">Nessun prodotto selezionato.</div>
 
     <div class="form-group">
-      <label>Nome e Cognome</label>
-      <input type="text" id="custName" placeholder="Es. Mario Rossi" required>
+      <label>Nome e Cognome *</label>
+      <input type="text" id="custName" placeholder="Es. Mario Rossi">
     </div>
 
     <div class="form-group">
-      <label>Numero di Telefono</label>
-      <input type="tel" id="custPhone" placeholder="Es. 3331234567" required>
+      <label>Numero di Telefono *</label>
+      <input type="tel" id="custPhone" placeholder="Es. 3331234567">
     </div>
 
     <div class="form-group">
-      <label>Orario di ritiro/consegna desiderato</label>
-      <input type="text" id="custTime" placeholder="Es. 20:30" required>
+      <label>Orario di ritiro desiderato *</label>
+      <input type="text" id="custTime" placeholder="Es. 20:30">
     </div>
 
     <div class="form-group">
-      <label>Note per la cucina (es. pizza ben cotta)</label>
+      <label>Note per la cucina</label>
       <textarea id="custNotes" rows="2" placeholder="Eventuali note..."></textarea>
     </div>
 
-    <button class="btn-invia" onclick="inviaOrdineMenu()">INVIA ORDINE</button>
+    <button type="button" class="btn-invia" id="btnInviaOrdine">INVIA ORDINE</button>
   </div>
 
   <script>
+    // Connessione Socket.io esplicita all'host attuale
     const socket = io();
     let carrelloCorrente = [];
+
+    // Log di connessione per verificare la rete
+    socket.on('connect', () => {
+      console.log("🟢 Connessione Socket.io stabilita con il server ID:", socket.id);
+    });
 
     function aggiungiAlCarrello(nome, prezzo) {
       carrelloCorrente.push({ name: nome, price: prezzo, selectedExtras: [] });
@@ -141,7 +147,8 @@
       aggiornaVistaCarrello();
     }
 
-    function inviaOrdineMenu() {
+    // Event listener agganciato in modo sicuro via JS
+    document.getElementById('btnInviaOrdine').addEventListener('click', function() {
       if (carrelloCorrente.length === 0) {
         alert("Il carrello è vuoto! Aggiungi almeno una pizza.");
         return;
@@ -153,11 +160,11 @@
       const notes = document.getElementById('custNotes').value.trim();
 
       if (!name || !phone || !time) {
-        alert("Compila tutti i campi obbligatori (Nome, Telefono, Orario).");
+        alert("Compila tutti i campi obbligatori (Nome, Telefono e Orario).");
         return;
       }
 
-      // Costruisce l'oggetto ordine strutturato esattamente come si aspetta la cucina
+      // Preparazione pacchetto ordine identico a asporto.html
       const orderData = {
         id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
         table: 'Asporto (da Menu)',
@@ -174,19 +181,21 @@
         stato: 'In attesa di conferma'
       };
 
-      // Invia l'ordine al server tramite Socket.io
+      console.log("Invio pacchetto ordine...", orderData);
+
+      // Invio socket
       socket.emit('nuovo_ordine', orderData);
 
       alert("✅ Ordine inviato con successo! Lo trovi subito sul display della cucina.");
-      
-      // Resetta il carrello
+
+      // Reset completo del form
       carrelloCorrente = [];
       aggiornaVistaCarrello();
       document.getElementById('custName').value = '';
       document.getElementById('custPhone').value = '';
       document.getElementById('custTime').value = '';
       document.getElementById('custNotes').value = '';
-    }
+    });
   </script>
 </body>
 </html>
