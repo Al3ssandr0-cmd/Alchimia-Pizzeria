@@ -24,11 +24,11 @@
     h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 15px; border-left: 4px solid var(--accent); padding-left: 10px; }
     
     .item-card { background: var(--card-bg); border-radius: 10px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
-    .item-info h3 { font-size: 1.1rem; margin-bottom: 5px; }
+    .item-info h3 { font-size: 1.1rem; margin-bottom: 5px; color: var(--text); }
     .item-info p { font-size: 0.85rem; color: var(--text-muted); }
-    .item-price { font-size: 1.1rem; font-weight: bold; color: var(--success); }
+    .item-price { font-size: 1.1rem; font-weight: bold; color: var(--success); white-space: nowrap; margin-left: 15px; }
     
-    .btn-add { background: var(--accent); color: #000; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+    .btn-add { background: var(--accent); color: #000; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; white-space: nowrap; margin-left: 10px; }
     .btn-add:hover { opacity: 0.9; }
 
     /* Sezione Carrello e Tavolo */
@@ -48,41 +48,224 @@
 <body>
 
   <header>
-    <h1>🍕 Pizzeria Alchimia</h1>
-    <p>Ordina direttamente dal tuo tavolo</p>
+    <h1>🍕 PIZZERIA ALCHIMIA</h1>
+    <p>Elementi in evoluzione - Ordina direttamente dal tuo tavolo</p>
   </header>
 
+  <!-- LE CLASSICHE -->
   <div class="menu-section">
-    <h2>Le Nostre Pizze</h2>
+    <h2>Le Classiche</h2>
     
     <div class="item-card">
       <div class="item-info">
-        <h3>Margherita</h3>
-        <p>Pomodoro, fior di latte, basilico fresco, olio EVO</p>
+        <h3>01 - Margherita</h3>
+        <p>Pomodoro, mozzarella, basilico</p>
+      </div>
+      <div class="item-price">€ 5.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('01 - Margherita', 5.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>02 - Margheritella</h3>
+        <p>Pomodoro, basilico, parmigiano grattugiato</p>
+      </div>
+      <div class="item-price">€ 5.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('02 - Margheritella', 5.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>03 - Margherita senza lattosio</h3>
+        <p>Pomodoro, mozzarella senza lattosio</p>
+      </div>
+      <div class="item-price">€ 5.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('03 - Margherita senza lattosio', 5.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>04 - Napoli</h3>
+        <p>Pomodoro, mozzarella, acciughe, capperi, origano</p>
+      </div>
+      <div class="item-price">€ 6.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('04 - Napoli', 6.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>05 - Diavola</h3>
+        <p>Pomodoro, mozzarella, salamino piccante</p>
+      </div>
+      <div class="item-price">€ 6.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('05 - Diavola', 6.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>06 - Nuova 4 Stagioni</h3>
+        <p>Base pomodoro e mozzarella, divisa in 4 spicchi: Margherita, Basilico, Cotto e Funghi, Salame Piccante, Acciughe</p>
+      </div>
+      <div class="item-price">€ 7.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('06 - Nuova 4 Stagioni', 7.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>07 - Tonno e Cipolla</h3>
+        <p>Pomodoro, mozzarella, tonno, cipolla</p>
+      </div>
+      <div class="item-price">€ 7.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('07 - Tonno e Cipolla', 7.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>08 - Wurstel e Patatine</h3>
+        <p>Mozzarella, wurstel, patatine fritte</p>
       </div>
       <div class="item-price">€ 7.00</div>
-      <button class="btn-add" onclick="aggiungiAlCarrello('Margherita', 7.00)">Aggiungi</button>
+      <button class="btn-add" onclick="aggiungiAlCarrello('08 - Wurstel e Patatine', 7.00)">Aggiungi</button>
     </div>
 
     <div class="item-card">
       <div class="item-info">
-        <h3>Diavola</h3>
-        <p>Pomodoro, fior di latte, salame piccante</p>
+        <h3>09 - Capricciosa</h3>
+        <p>Pomodoro, mozzarella, prosciutto cotto, funghi</p>
+      </div>
+      <div class="item-price">€ 7.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('09 - Capricciosa', 7.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>10 - Calzone</h3>
+        <p>Pomodoro, mozzarella, prosciutto cotto, funghi</p>
+      </div>
+      <div class="item-price">€ 7.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('10 - Calzone', 7.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>11 - Porcini e Salsiccia</h3>
+        <p>Pomodoro, mozzarella, funghi porcini, salsiccia</p>
       </div>
       <div class="item-price">€ 8.50</div>
-      <button class="btn-add" onclick="aggiungiAlCarrello('Diavola', 8.50)">Aggiungi</button>
+      <button class="btn-add" onclick="aggiungiAlCarrello('11 - Porcini e Salsiccia', 8.50)">Aggiungi</button>
     </div>
 
     <div class="item-card">
       <div class="item-info">
-        <h3>Capricciosa</h3>
-        <p>Pomodoro, fior di latte, prosciutto cotto, funghi, carciofi, olive</p>
+        <h3>12 - Ortolana</h3>
+        <p>Pomodoro, mozzarella, melanzane, zucchine, peperoni</p>
       </div>
-      <div class="item-price">€ 9.50</div>
-      <button class="btn-add" onclick="aggiungiAlCarrello('Capricciosa', 9.50)">Aggiungi</button>
+      <div class="item-price">€ 7.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('12 - Ortolana', 7.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>13 - Completa</h3>
+        <p>Pomodoro, mozzarella, prosciutto cotto, capperi, funghi, carciofi</p>
+      </div>
+      <div class="item-price">€ 7.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('13 - Completa', 7.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>14 - Principessa</h3>
+        <p>Pomodoro, mozzarella, panna e crudo</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('14 - Principessa', 8.00)">Aggiungi</button>
     </div>
   </div>
 
+  <!-- LE SPECIALI -->
+  <div class="menu-section">
+    <h2>Le Speciali</h2>
+    
+    <div class="item-card">
+      <div class="item-info">
+        <h3>15 - Martinese</h3>
+        <p>Pomodoro, mozzarella, capocollo di Martina Franca, stracciatella</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('15 - Martinese', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>16 - Alchimia</h3>
+        <p>Mozzarella, mortadella, pesto di pistacchio, burrata</p>
+      </div>
+      <div class="item-price">€ 10.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('16 - Alchimia', 10.00)">Aggiungi</button>
+    </div>
+  </div>
+
+  <!-- LE BIANCHE & SFIZIOSE -->
+  <div class="menu-section">
+    <h2>Le Bianche & Sfiiziose</h2>
+    
+    <div class="item-card">
+      <div class="item-info">
+        <h3>17 - Bufalina</h3>
+        <p>Senza pomodoro, mozzarella, mozzarella di bufala fresca</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('17 - Bufalina', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>18 - 4 Formaggi</h3>
+        <p>Mozzarella, gorgonzola, emmental, fontina</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('18 - 4 Formaggi', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>19 - Fumè</h3>
+        <p>Speck e scamorza</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('19 - Fumè', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>20 - Bresaola e Rucola</h3>
+        <p>Bresaola, rucola, scaglie di grana, citronette</p>
+      </div>
+      <div class="item-price">€ 8.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('20 - Bresaola e Rucola', 8.50)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>21 - Furore</h3>
+        <p>Mozzarella, tonno, scamorza affumicata</p>
+      </div>
+      <div class="item-price">€ 8.00</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('21 - Furore', 8.00)">Aggiungi</button>
+    </div>
+
+    <div class="item-card">
+      <div class="item-info">
+        <h3>22 - Fresca</h3>
+        <p>Mozzarella, pomodorini freschi, scaglie di grana, funghi (tutto in uscita)</p>
+      </div>
+      <div class="item-price">€ 7.50</div>
+      <button class="btn-add" onclick="aggiungiAlCarrello('22 - Fresca', 7.50)">Aggiungi</button>
+    </div>
+  </div>
+
+  <!-- SEZIONE CARRELLO -->
   <div class="cart-box">
     <h2>Il tuo Ordine</h2>
     <div id="cartSummary">Nessun prodotto selezionato.</div>
@@ -136,7 +319,7 @@
       let totale = 0;
       carrelloCorrente.forEach((item, index) => {
         totale += item.price;
-        html += `<li>${item.name} - € ${item.price.toFixed(2)} <button style="color:red; background:none; border:none; cursor:pointer; margin-left:10px;" onclick="rimuoviItem(${index})">[rimuovi]</button></li>`;
+        html += `<li style="margin-bottom: 5px;">${item.name} - € ${item.price.toFixed(2)} <button style="color:red; background:none; border:none; cursor:pointer; margin-left:10px;" onclick="rimuoviItem(${index})">[rimuovi]</button></li>`;
       });
       html += `</ul><div style="margin-top:10px; font-weight:bold; color:var(--success);">Totale: € ${totale.toFixed(2)}</div>`;
       summary.innerHTML = html;
