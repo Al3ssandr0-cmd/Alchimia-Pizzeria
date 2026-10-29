@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pizzeria Alchimia - Ordina Online (Asporto & Domicilio)</title>
   
-  <!-- Stripe JS SDK -->
-  <script src="https://js.stripe.com/v3/"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 
   <style>
@@ -46,10 +44,6 @@
     .ingredient-option input { width: 22px; height: 22px; accent-color: var(--accent); cursor: pointer; }
     .btn { background: var(--accent); color: #000; border: none; padding: 14px; border-radius: 10px; font-weight: bold; width: 100%; font-size: 1rem; cursor: pointer; margin-top: 15px; }
     .btn-close { background: #475569; color: var(--text); margin-top: 8px; }
-    
-    /* Box Stripe */
-    #stripe-container { background: var(--card-bg); border: 1px solid var(--accent); border-radius: 12px; padding: 15px; margin-bottom: 20px; display: none; }
-    #card-errors { color: #f87171; margin-top: 8px; font-size: 0.9rem; font-weight: bold; }
 
     .cart-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #020617; border-top: 2px solid #334155; padding: 15px; display: flex; justify-content: space-between; align-items: center; z-index: 900; }
     .cart-btn { background: var(--success); color: #fff; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
@@ -76,8 +70,8 @@
       
       <label>Tipo di Servizio:</label>
       <select id="orderType" onchange="toggleAddressField()">
-        <option value="Asporto">Ritiro in Pizzeria (Asporto - Paga in cassa)</option>
-        <option value="Domicilio">Consegna a Domicilio (Pagamento con Carta)</option>
+        <option value="Asporto">Ritiro in Pizzeria (Asporto)</option>
+        <option value="Domicilio">Consegna a Domicilio</option>
       </select>
 
       <label>Nome e Cognome *</label>
@@ -96,13 +90,6 @@
 
       <label>Note o Intolleranze (opzionale)</label>
       <textarea id="orderNotes" placeholder="Es. Senza cipolla, campanello rotto..." style="height: 60px; resize: none;"></textarea>
-    </div>
-
-    <!-- SEZIONE STRIPE (Visibile solo per Domicilio) -->
-    <div id="stripe-container">
-      <h3 style="color: var(--accent); margin-bottom: 10px;">💳 Pagamento con Carta Obbligatorio</h3>
-      <div id="payment-element"></div>
-      <div id="card-errors"></div>
     </div>
 
     <!-- SEZIONE PIZZE -->
@@ -156,51 +143,17 @@
 
   <script>
     const socket = io();
-    const stripe = Stripe('pk_test_51PxTESTKEY_SOSTITUISCI_CON_LA_TUA_PUBBLICA');
-    let elements;
     let cart = [];
     let currentItem = null;
 
     function toggleAddressField() {
       const type = document.getElementById('orderType').value;
       const addressContainer = document.getElementById('addressContainer');
-      const stripeContainer = document.getElementById('stripe-container');
 
       if (type === 'Domicilio') {
         addressContainer.style.display = 'block';
-        stripeContainer.style.display = 'block';
-        inizializzaStripe();
       } else {
         addressContainer.style.display = 'none';
-        stripeContainer.style.display = 'none';
-      }
-    }
-
-    async function inizializzaStripe() {
-      const total = cart.reduce((sum, item) => sum + item.price, 0);
-      if (total <= 0) {
-        document.getElementById('card-errors').innerText = "Aggiungi prima dei prodotti al carrello per pagare.";
-        return;
-      }
-
-      try {
-        const response = await fetch('/create-payment-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: total })
-        });
-        const data = await response.json();
-        
-        if (data.error) {
-          document.getElementById('card-errors').innerText = data.error;
-          return;
-        }
-
-        elements = stripe.elements({ clientSecret: data.clientSecret });
-        const paymentElement = elements.create('payment');
-        paymentElement.mount('#payment-element');
-      } catch (err) {
-        console.error("Errore Stripe:", err);
       }
     }
 
@@ -244,12 +197,6 @@
       cart.push({...currentItem});
       updateCartDisplay();
       closeModal();
-      
-      // Se era già selezionato domicilio, aggiorna Stripe con il nuovo totale
-      const orderType = document.getElementById('orderType').value;
-      if (orderType === 'Domicilio') {
-        inizializzaStripe();
-      }
     }
 
     function updateCartDisplay() {
@@ -257,7 +204,7 @@
       document.getElementById('cartTotal').innerText = total.toFixed(2) + ' €';
     }
 
-    async function sendOrderToServer() {
+    function sendOrderToServer() {
       if (cart.length === 0) {
         alert('Seleziona prima almeno un prodotto!');
         return;
@@ -274,61 +221,28 @@
         return;
       }
 
-      const totalValue = cart.reduce((sum, item) => sum + item.price, 0);
-
-      // CASO 1: ASPORTO (Paga in cassa)
-      if (orderType === 'Asporto') {
-        finalizzaInvioOrdine({
-          id: 'ord_' + Date.now(),
-          table: '🛵 ASPORTO',
-          customer: { name, phone, address: 'Ritiro in Pizzeria', time: reqTime },
-          items: cart,
-          notes: document.getElementById('orderNotes').value,
-          total: totalValue.toFixed(2) + ' €',
-          statoPagamento: '🔴 DA PAGARE IN CASSA',
-          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        });
-        return;
-      }
-
-      // CASO 2: DOMICILIO (Paga con carta)
-      if (!address) {
+      if (orderType === 'Domicilio' && !address) {
         alert('Inserisci l\'indirizzo per la consegna a domicilio!');
         return;
       }
 
-      const btn = document.getElementById('btn-invia');
-      btn.disabled = true;
-      btn.innerText = "Elaborazione pagamento...";
+      const totalValue = cart.reduce((sum, item) => sum + item.price, 0);
 
-      const { error, paymentIntent } = await stripe.confirmPayment({
-        elements,
-        confirmParams: { return_url: window.location.href },
-        redirect: 'if_required'
-      });
+      const orderData = {
+        id: 'ord_' + Date.now(),
+        table: orderType === 'Domicilio' ? '🏠 DOMICILIO' : '🛵 ASPORTO',
+        customer: {
+          name: name,
+          phone: phone,
+          address: orderType === 'Domicilio' ? address : 'Ritiro in Pizzeria',
+          time: reqTime
+        },
+        items: cart,
+        notes: document.getElementById('orderNotes').value,
+        total: totalValue.toFixed(2) + ' €',
+        time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+      };
 
-      if (error) {
-        document.getElementById('card-errors').innerText = error.message;
-        btn.disabled = false;
-        btn.innerText = "INVIA ORDINE";
-        return;
-      }
-
-      if (paymentIntent && paymentIntent.status === 'succeeded') {
-        finalizzaInvioOrdine({
-          id: 'ord_' + Date.now(),
-          table: '🏠 DOMICILIO',
-          customer: { name, phone, address, time: reqTime },
-          items: cart,
-          notes: document.getElementById('orderNotes').value,
-          total: totalValue.toFixed(2) + ' €',
-          statoPagamento: '🟢 GIÀ PAGATO ONLINE (Carta)',
-          time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
-        });
-      }
-    }
-
-    function finalizzaInvioOrdine(orderData) {
       socket.emit('nuovo_ordine', orderData);
 
       const statusBox = document.getElementById('orderStatusBox');
@@ -339,10 +253,6 @@
       alert('✅ Ordine inviato con successo!');
       cart = [];
       updateCartDisplay();
-      
-      const btn = document.getElementById('btn-invia');
-      btn.disabled = false;
-      btn.innerText = "INVIA ORDINE";
     }
 
     socket.on('aggiorna_stato_cliente', (data) => {
