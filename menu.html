@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizzeria Alchimia - Menu Online</title>
-  <!-- Socket.io -->
+  <title>Pizzeria Alchimia - Ordina al Tavolo</title>
+  <!-- Socket.io per la comunicazione in tempo reale -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     :root {
@@ -31,13 +31,13 @@
     .btn-add { background: var(--accent); color: #000; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; }
     .btn-add:hover { opacity: 0.9; }
 
-    /* Sezione Carrello */
+    /* Sezione Carrello e Tavolo */
     .cart-box { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid #334155; margin-top: 40px; }
     .cart-box h2 { border-left-color: var(--success); color: var(--success); }
     
     .form-group { margin-bottom: 15px; }
     .form-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: var(--text-muted); }
-    .form-group input, .form-group textarea { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: var(--text); font-size: 1rem; }
+    .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: var(--text); font-size: 1rem; }
     
     .btn-invia { width: 100%; background: var(--success); color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
     .btn-invia:hover { opacity: 0.9; }
@@ -49,7 +49,7 @@
 
   <header>
     <h1>🍕 Pizzeria Alchimia</h1>
-    <p>Ordina direttamente dal menu</p>
+    <p>Ordina direttamente dal tuo tavolo</p>
   </header>
 
   <div class="menu-section">
@@ -87,38 +87,38 @@
     <h2>Il tuo Ordine</h2>
     <div id="cartSummary">Nessun prodotto selezionato.</div>
 
+    <!-- SELEZIONE TAVOLO -->
     <div class="form-group">
-      <label>Nome e Cognome *</label>
-      <input type="text" id="custName" placeholder="Es. Mario Rossi">
+      <label>Seleziona il tuo Tavolo *</label>
+      <select id="tableNumber">
+        <option value="">-- Scegli il numero del tavolo --</option>
+        <option value="Tavolo 1">Tavolo 1</option>
+        <option value="Tavolo 2">Tavolo 2</option>
+        <option value="Tavolo 3">Tavolo 3</option>
+        <option value="Tavolo 4">Tavolo 4</option>
+        <option value="Tavolo 5">Tavolo 5</option>
+        <option value="Tavolo 6">Tavolo 6</option>
+        <option value="Tavolo 7">Tavolo 7</option>
+        <option value="Tavolo 8">Tavolo 8</option>
+      </select>
     </div>
 
     <div class="form-group">
-      <label>Numero di Telefono *</label>
-      <input type="tel" id="custPhone" placeholder="Es. 3331234567">
-    </div>
-
-    <div class="form-group">
-      <label>Orario di ritiro desiderato *</label>
-      <input type="text" id="custTime" placeholder="Es. 20:30">
+      <label>Nome (opzionale)</label>
+      <input type="text" id="custName" placeholder="Es. Mario">
     </div>
 
     <div class="form-group">
       <label>Note per la cucina</label>
-      <textarea id="custNotes" rows="2" placeholder="Eventuali note..."></textarea>
+      <textarea id="custNotes" rows="2" placeholder="Richieste speciali o intolleranze..."></textarea>
     </div>
 
-    <button type="button" class="btn-invia" id="btnInviaOrdine">INVIA ORDINE</button>
+    <button type="button" class="btn-invia" id="btnInviaOrdine">INVIA ORDINE IN CUCINA</button>
   </div>
 
   <script>
-    // Connessione Socket.io esplicita all'host attuale
     const socket = io();
     let carrelloCorrente = [];
-
-    // Log di connessione per verificare la rete
-    socket.on('connect', () => {
-      console.log("🟢 Connessione Socket.io stabilita con il server ID:", socket.id);
-    });
 
     function aggiungiAlCarrello(nome, prezzo) {
       carrelloCorrente.push({ name: nome, price: prezzo, selectedExtras: [] });
@@ -147,33 +147,30 @@
       aggiornaVistaCarrello();
     }
 
-    // Event listener agganciato in modo sicuro via JS
     document.getElementById('btnInviaOrdine').addEventListener('click', function() {
       if (carrelloCorrente.length === 0) {
         alert("Il carrello è vuoto! Aggiungi almeno una pizza.");
         return;
       }
 
-      const name = document.getElementById('custName').value.trim();
-      const phone = document.getElementById('custPhone').value.trim();
-      const time = document.getElementById('custTime').value.trim();
+      const table = document.getElementById('tableNumber').value;
+      const name = document.getElementById('custName').value.trim() || 'Cliente al Tavolo';
       const notes = document.getElementById('custNotes').value.trim();
 
-      if (!name || !phone || !time) {
-        alert("Compila tutti i campi obbligatori (Nome, Telefono e Orario).");
+      if (!table) {
+        alert("Seleziona il numero del tavolo prima di inviare l'ordine!");
         return;
       }
 
-      // Preparazione pacchetto ordine identico a asporto.html
       const orderData = {
         id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
-        table: 'Asporto (da Menu)',
+        table: table,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         items: carrelloCorrente,
         customer: {
           name: name,
-          phone: phone,
-          time: time,
+          phone: '',
+          time: 'Al Tavolo',
           address: ''
         },
         notes: notes,
@@ -181,19 +178,15 @@
         stato: 'In attesa di conferma'
       };
 
-      console.log("Invio pacchetto ordine...", orderData);
-
-      // Invio socket
       socket.emit('nuovo_ordine', orderData);
 
-      alert("✅ Ordine inviato con successo! Lo trovi subito sul display della cucina.");
+      alert("✅ Ordine inviato con successo alla cucina!");
 
-      // Reset completo del form
+      // Resetta il carrello
       carrelloCorrente = [];
       aggiornaVistaCarrello();
+      document.getElementById('tableNumber').value = '';
       document.getElementById('custName').value = '';
-      document.getElementById('custPhone').value = '';
-      document.getElementById('custTime').value = '';
       document.getElementById('custNotes').value = '';
     });
   </script>
