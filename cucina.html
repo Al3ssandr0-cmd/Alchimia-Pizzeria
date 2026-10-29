@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pizzeria Alchimia - Display Cucina</title>
+  <title>Pizzeria Alchimia - Gestione Cucina & Cassa</title>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     :root {
@@ -13,130 +13,231 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --success: #10b981;
+      --danger: #ef4444;
+      --table-color: #3b82f6;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text); padding: 20px; }
-    header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 2px solid #334155; margin-bottom: 25px; }
+    body { background-color: var(--bg-color); color: var(--text); padding: 15px; }
+
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #334155; }
     h1 { color: var(--accent); font-size: 1.8rem; }
-    .status-badge { background: #334155; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; color: var(--success); font-weight: bold; }
-    
-    .grid-orders { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
-    .order-card { background: var(--card-bg); border-radius: 12px; border: 1px solid #334155; padding: 18px; position: relative; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-    .order-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; border-bottom: 1px solid #334155; padding-bottom: 10px; }
-    .order-type { font-weight: bold; font-size: 1.1rem; color: var(--accent); }
-    .order-time { font-size: 0.85rem; color: var(--text-muted); }
-    
-    .customer-info { margin-bottom: 12px; font-size: 0.9rem; line-height: 1.4; color: #cbd5e1; }
-    .customer-info strong { color: var(--text); }
+    .status-badge { background: #166534; color: #4ade80; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
 
-    .items-list { margin: 12px 0; padding-left: 0; list-style: none; border-top: 1px dashed #334155; padding-top: 10px; }
-    .items-list li { margin-bottom: 8px; font-size: 1rem; }
-    .extras { display: block; font-size: 0.85rem; color: var(--accent); margin-left: 10px; }
+    /* Layout Principale a 2 colonne grandi: Cucina e Cassa */
+    .main-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
 
-    .order-notes { background: #0f172a; border-left: 3px solid var(--accent); padding: 8px 10px; border-radius: 4px; font-size: 0.85rem; margin-bottom: 15px; color: #f1f5f9; }
+    @media (max-width: 1024px) {
+      .main-container { grid-template-columns: 1fr; }
+    }
+
+    /* Sezione Cucina (divisa in Tavoli e Asporto) */
+    .kitchen-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    @media (max-width: 600px) { .kitchen-columns { grid-template-columns: 1fr; } }
+
+    .column-title { font-size: 1.2rem; font-weight: bold; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
+    .title-tavoli { background: rgba(59, 130, 246, 0.2); color: var(--table-color); border: 1px solid var(--table-color); }
+    .title-asporto { background: rgba(245, 158, 11, 0.2); color: var(--accent); border: 1px solid var(--accent); }
+
+    .order-card { background: var(--card-bg); border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #334155; }
+    .order-card.tavolo-card { border-left: 5px solid var(--table-color); }
+    .order-card.asporto-card { border-left: 5px solid var(--accent); }
+
+    .order-header { display: flex; justify-content: space-between; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+    .order-items { list-style: none; margin-bottom: 10px; }
+    .order-items li { font-size: 1rem; padding: 3px 0; border-bottom: 1px dashed #334155; }
+    .order-notes { background: #0f172a; padding: 8px; border-radius: 6px; font-size: 0.85rem; color: #fbbf24; margin-bottom: 10px; }
+
+    /* Sezione Cassa / Conto Tavoli */
+    .cassa-box { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 2px solid var(--success); position: sticky; top: 15px; height: fit-content; }
+    .cassa-box h2 { color: var(--success); font-size: 1.4rem; margin-bottom: 15px; text-align: center; }
     
-    .payment-tag { display: inline-block; padding: 4px 8px; border-radius: 6px; font-weight: bold; font-size: 0.8rem; margin-bottom: 15px; }
-    .pay-cassa { background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b; }
-    .pay-online { background: #10b98122; color: #10b981; border: 1px solid #10b981; }
+    .select-tavolo { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: var(--text); font-size: 1.1rem; margin-bottom: 15px; font-weight: bold; }
 
-    .btn-status { width: 100%; background: var(--accent); color: #000; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.95rem; }
-    .btn-status:hover { opacity: 0.9; }
-    .empty-msg { text-align: center; color: var(--text-muted); grid-column: 1 / -1; margin-top: 50px; font-size: 1.2rem; }
+    .conto-summary { background: #0f172a; border-radius: 8px; padding: 15px; min-height: 150px; margin-bottom: 15px; border: 1px solid #334155; }
+    .conto-item { display: flex; justify-content: space-between; font-size: 0.95rem; margin-bottom: 8px; border-bottom: 1px dashed #334155; padding-bottom: 4px; }
+    .conto-totale { font-size: 1.3rem; font-weight: bold; color: var(--success); text-align: right; margin-top: 15px; border-top: 2px solid var(--success); padding-top: 10px; }
+
+    .btn-salda { width: 100%; background: var(--success); color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+    .btn-salda:hover { opacity: 0.9; }
+    .btn-evadi { background: #334155; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 5px; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>👨‍🍳 Display Cucina - Pizzeria Alchimia</h1>
-    <div class="status-badge">🟢 Connesso al Server</div>
+    <h1>🍕 Pizzeria Alchimia - Dashboard</h1>
+    <span class="status-badge" id="statusBadge">🟢 Connesso al Server</span>
   </header>
 
-  <div id="ordersContainer" class="grid-orders">
-    <div id="emptyMsg" class="empty-msg">In attesa di nuovi ordini...</div>
+  <div class="main-container">
+    
+    <!-- COLONNA CUCINA (Divida in Ordini Tavolo e Ordini Asporto) -->
+    <div>
+      <div class="kitchen-columns">
+        
+        <!-- COLONNA 1: TAVOLI -->
+        <div>
+          <div class="column-title title-tavoli">🍽️ Ordini Tavoli (Sala)</div>
+          <div id="listaOrdiniTavoli">
+            <!-- Gli ordini del locale compaiono qui -->
+          </div>
+        </div>
+
+        <!-- COLONNA 2: ASPORTO E DOMICILIO -->
+        <div>
+          <div class="column-title title-asporto">📦 Asporto / Domicilio</div>
+          <div id="listaOrdiniAsporto">
+            <!-- Gli ordini d'asporto compaiono qui -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- COLONNA CASSA: CONTO TAVOLO -->
+    <div class="cassa-box">
+      <h2>💶 Cassa & Conto Tavoli</h2>
+      
+      <label style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Seleziona Tavolo per il Conto:</label>
+      <select class="select-tavolo" id="cassaSelectTavolo" onchange="calcolaContoTavolo()">
+        <option value="">-- Scegli Tavolo --</option>
+        <option value="Tavolo 1">Tavolo 1</option>
+        <option value="Tavolo 2">Tavolo 2</option>
+        <option value="Tavolo 3">Tavolo 3</option>
+        <option value="Tavolo 4">Tavolo 4</option>
+        <option value="Tavolo 5">Tavolo 5</option>
+        <option value="Tavolo 6">Tavolo 6</option>
+        <option value="Tavolo 7">Tavolo 7</option>
+        <option value="Tavolo 8">Tavolo 8</option>
+      </select>
+
+      <div class="conto-summary" id="contoSummary">
+        <p style="color: var(--text-muted); text-align: center; margin-top: 40px;">Seleziona un tavolo per vedere il riepilogo del conto.</p>
+      </div>
+
+      <button class="btn-salda" onclick="chiudiContoTavolo()">CHIUDI & SALDA CONTO</button>
+    </div>
+
   </div>
 
   <script>
     const socket = io();
-    const ordiniRicevuti = new Set();
+    let tuttiGliOrdini = [];
 
-    // 1. Riceve lo storico degli ordini esistenti appena si connette
-    socket.on('carica_ordini_esistenti', (ordini) => {
-      console.log("Ordini esistenti ricevuti:", ordini);
-      ordini.forEach(ordine => mostraOrdineInCucina(ordine));
+    socket.on('connect', () => {
+      document.getElementById('statusBadge').innerText = '🟢 Connesso al Server';
     });
 
-    // 2. Riceve in tempo reale ogni nuovo ordine inviato
-    socket.on('nuovo_ordine', (orderData) => {
-      console.log("Nuovo ordine in tempo reale:", orderData);
-      mostraOrdineInCucina(orderData);
+    socket.on('disconnect', () => {
+      document.getElementById('statusBadge').innerText = '🔴 Disconnesso';
     });
 
-    function mostraOrdineInCucina(ordine) {
-      // Evita duplicati se l'ordine è già presente sullo schermo
-      if (ordiniRicevuti.has(ordine.id)) return;
-      ordiniRicevuti.add(ordine.id);
+    // Ricezione di tutti gli ordini esistenti
+    socket.on('carica_ordini', (ordini) => {
+      tuttiGliOrdini = ordini;
+      renderizzaSchermata();
+    });
 
-      const emptyMsg = document.getElementById('emptyMsg');
-      if (emptyMsg) emptyMsg.style.display = 'none';
+    // Ricezione di un singolo nuovo ordine
+    socket.on('nuovo_ordine_cucina', (ordine) => {
+      tuttiGliOrdini.push(ordine);
+      renderizzaSchermata();
+    });
 
-      const container = document.getElementById('ordersContainer');
-      const isOnline = ordine.statoPagamento && ordine.statoPagamento.includes('GIÀ PAGATO');
+    function renderizzaSchermata() {
+      const containerTavoli = document.getElementById('listaOrdiniTavoli');
+      const containerAsporto = document.getElementById('listaOrdiniAsporto');
+      
+      containerTavoli.innerHTML = '';
+      containerAsporto.innerHTML = '';
 
-      let itemsHtml = '';
-      ordine.items.forEach(item => {
-        let extrasHtml = '';
-        if (item.selectedExtras && item.selectedExtras.length > 0) {
-          extrasHtml = `<span class="extras">+ ${item.selectedExtras.join(', ')}</span>`;
+      tuttiGliOrdini.forEach(ord => {
+        const isTavolo = ord.table && ord.table.toLowerCase().includes('tavolo');
+
+        let itemsHtml = '<ul class="order-items">';
+        ord.items.forEach(it => {
+          itemsHtml += `<li><strong>1x</strong> ${it.name} (€${it.price.toFixed(2)})</li>`;
+        });
+        itemsHtml += '</ul>';
+
+        const orderCard = document.createElement('div');
+        orderCard.className = `order-card ${isTavolo ? 'tavolo-card' : 'asporto-card'}`;
+        orderCard.innerHTML = `
+          <div class="order-header">
+            <span>${ord.table}</span>
+            <span style="font-size:0.85rem; color:var(--accent);">${ord.time}</span>
+          </div>
+          ${itemsHtml}
+          ${ord.notes ? `<div class="order-notes">📝 ${ord.notes}</div>` : ''}
+          <button class="btn-evadi" onclick="rimuoviOrdine('${ord.id}')">✔️ Completa / Rimuovi</button>
+        `;
+
+        if (isTavolo) {
+          containerTavoli.appendChild(orderCard);
+        } else {
+          containerAsporto.appendChild(orderCard);
         }
-        itemsHtml += `<li><strong>1x</strong> ${item.name} ${extrasHtml}</li>`;
       });
 
-      const card = document.createElement('div');
-      card.className = 'order-card';
-      card.id = `card_${ordine.id}`;
-      card.innerHTML = `
-        <div class="order-header">
-          <div class="order-type">${ordine.table}</div>
-          <div class="order-time">Ore ${ordine.time || ''}</div>
-        </div>
-        
-        <div class="customer-info">
-          <div><strong>Cliente:</strong> ${ordine.customer.name}</div>
-          <div><strong>Tel:</strong> ${ordine.customer.phone}</div>
-          <div><strong>Orario rich:</strong> <span style="color: var(--accent); font-weight: bold;">${ordine.customer.time}</span></div>
-          ${ordine.customer.address ? `<div><strong>Indirizzo:</strong> ${ordine.customer.address}</div>` : ''}
-        </div>
-
-        <div class="payment-tag ${isOnline ? 'pay-online' : 'pay-cassa'}">
-          ${ordine.statoPagamento || 'DA VERIFICARE'}
-        </div>
-
-        <ul class="items-list">
-          ${itemsHtml}
-        </ul>
-
-        ${ordine.notes ? `<div class="order-notes"><strong>Note:</strong> ${ordine.notes}</div>` : ''}
-
-        <button class="btn-status" onclick="cambiaStato('${ordine.id}', 'In Preparazione')">
-          IN PREPARAZIONE ⏳
-        </button>
-      `;
-
-      container.prepend(card); // Mostra i nuovi ordini in alto
+      // Aggiorna anche il riepilogo cassa se c'è un tavolo selezionato
+      calcolaContoTavolo();
     }
 
-    function cambiaStato(orderId, nuovoStato) {
-      socket.emit('aggiorna_stato', { orderId: orderId, status: nuovoStato });
-      const card = document.getElementById(`card_${orderId}`);
-      if (card) {
-        card.style.borderColor = 'var(--success)';
-        const btn = card.querySelector('.btn-status');
-        if (btn) {
-          btn.innerText = 'PRONTO / IN CONSEGNA ✅';
-          btn.style.background = 'var(--success)';
-          btn.style.color = '#fff';
-        }
+    function calcolaContoTavolo() {
+      const tavoloSelezionato = document.getElementById('cassaSelectTavolo').value;
+      const summaryBox = document.getElementById('contoSummary');
+
+      if (!tavoloSelezionato) {
+        summaryBox.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 40px;">Seleziona un tavolo per vedere il riepilogo del conto.</p>';
+        return;
       }
+
+      // Filtra tutti gli ordini associati a questo tavolo
+      const ordiniTavolo = tuttiGliOrdini.filter(o => o.table === tavoloSelezionato);
+
+      if (ordiniTavolo.length === 0) {
+        summaryBox.innerHTML = `<p style="color: var(--text-muted); text-align: center; margin-top: 40px;">Nessun ordine attivo per <strong>${tavoloSelezionato}</strong>.</p>`;
+        return;
+      }
+
+      let totaleConto = 0;
+      let html = `<h3 style="color:var(--table-color); margin-bottom:10px;">${tavoloSelezionato}</h3>`;
+
+      ordiniTavolo.forEach(ord => {
+        ord.items.forEach(it => {
+          totaleConto += it.price;
+          html += `
+            <div class="conto-item">
+              <span>${it.name}</span>
+              <span>€ ${it.price.toFixed(2)}</span>
+            </div>
+          `;
+        });
+      });
+
+      html += `<div class="conto-totale">Totale: € ${totaleConto.toFixed(2)}</div>`;
+      summaryBox.innerHTML = html;
+    }
+
+    function chiudiContoTavolo() {
+      const tavoloSelezionato = document.getElementById('cassaSelectTavolo').value;
+      if (!tavoloSelezionato) {
+        alert("Seleziona prima un tavolo per chiudere il conto!");
+        return;
+      }
+
+      if (confirm(`Confermi di aver incassato il conto per ${tavoloSelezionato}? Gli ordini di questo tavolo verranno liberati.`)) {
+        // Rimuove tutti gli ordini di quel tavolo
+        tuttiGliOrdini = tuttiGliOrdini.filter(o => o.table !== tavoloSelezionato);
+        renderizzaSchermata();
+        document.getElementById('cassaSelectTavolo').value = '';
+        calcolaContoTavolo();
+      }
+    }
+
+    function rimuoviOrdine(id) {
+      tuttiGliOrdini = tuttiGliOrdini.filter(o => o.id !== id);
+      renderizzaSchermata();
     }
   </script>
 </body>
