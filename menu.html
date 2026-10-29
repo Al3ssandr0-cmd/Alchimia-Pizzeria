@@ -4,52 +4,68 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pizzeria Alchimia - Ordina al Tavolo</title>
-  <!-- Socket.io per la comunicazione in tempo reale -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <style>
     :root {
-      --bg-color: #0f172a;
-      --card-bg: #1e293b;
-      --accent: #f59e0b;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --success: #10b981;
+      --bg-color: #3b0911;       /* Bordeaux scuro caldo */
+      --card-bg: #4f121b;        /* Bordeaux leggermente più chiaro per i box */
+      --accent-gold: #f3d2a2;    /* Oro elegante */
+      --accent-light: #d4af37;   /* Oro brillante */
+      --text: #fdf8f2;           /* Bianco crema */
+      --text-muted: #d8b4bc;     /* Rosa/bordeaux desaturato per descrizioni */
+      --success: #22c55e;        /* Verde per prezzi e tasti */
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Georgia', serif; }
     body { background-color: var(--bg-color); color: var(--text); padding: 20px; max-width: 800px; margin: 0 auto; }
-    header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #334155; padding-bottom: 15px; }
-    h1 { color: var(--accent); font-size: 2rem; }
     
-    .menu-section { margin-bottom: 30px; }
-    h2 { font-size: 1.3rem; color: var(--accent); margin-bottom: 15px; border-left: 4px solid var(--accent); padding-left: 10px; }
+    header { text-align: center; margin-bottom: 35px; border-bottom: 2px solid var(--accent-light); padding-bottom: 20px; }
+    h1 { 
+      color: var(--accent-gold); 
+      font-size: 2.5rem; 
+      font-style: italic; 
+      letter-spacing: 1px; 
+      font-family: 'Palatino Linotype', 'Times New Roman', serif;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+    header p { color: var(--text-muted); font-size: 1rem; margin-top: 5px; font-style: italic; }
     
-    .item-card { background: var(--card-bg); border-radius: 10px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
-    .item-info h3 { font-size: 1.1rem; margin-bottom: 5px; color: var(--text); }
-    .item-info p { font-size: 0.85rem; color: var(--text-muted); }
-    .item-price { font-size: 1.1rem; font-weight: bold; color: var(--success); white-space: nowrap; margin-left: 15px; }
+    .menu-section { margin-bottom: 35px; }
+    h2 { font-size: 1.4rem; color: var(--accent-gold); margin-bottom: 15px; border-bottom: 1px solid var(--accent-light); padding-bottom: 5px; font-family: 'Segoe UI', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
     
-    .btn-add { background: var(--accent); color: #000; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; white-space: nowrap; margin-left: 10px; }
-    .btn-add:hover { opacity: 0.9; }
+    .item-card { background: var(--card-bg); border-radius: 8px; padding: 15px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #6b1f2d; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+    .item-info h3 { font-size: 1.1rem; margin-bottom: 5px; color: var(--accent-gold); font-family: 'Segoe UI', sans-serif; }
+    .item-info p { font-size: 0.85rem; color: var(--text-muted); font-family: 'Segoe UI', sans-serif; }
+    .item-price { font-size: 1.15rem; font-weight: bold; color: var(--accent-gold); white-space: nowrap; margin-left: 15px; font-family: 'Segoe UI', sans-serif; }
+    
+    .btn-add { background: var(--accent-gold); color: #2d050c; border: none; padding: 8px 15px; border-radius: 6px; font-weight: bold; cursor: pointer; white-space: nowrap; margin-left: 10px; font-family: 'Segoe UI', sans-serif; }
+    .btn-add:hover { background: var(--accent-light); }
 
-    /* Sezione Carrello e Tavolo */
-    .cart-box { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 1px solid #334155; margin-top: 40px; }
-    .cart-box h2 { border-left-color: var(--success); color: var(--success); }
+    /* Sezione Impasti, Carrello e Tavolo */
+    .cart-box { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 2px solid var(--accent-light); margin-top: 40px; font-family: 'Segoe UI', sans-serif; }
+    .cart-box h2 { border-bottom: none; color: var(--accent-gold); margin-bottom: 15px; font-size: 1.3rem; }
     
-    .form-group { margin-bottom: 15px; }
-    .form-group label { display: block; font-size: 0.9rem; margin-bottom: 5px; color: var(--text-muted); }
-    .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: var(--text); font-size: 1rem; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; font-size: 0.95rem; margin-bottom: 8px; color: var(--accent-gold); font-weight: bold; }
+    .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 12px; border-radius: 6px; border: 1px solid #6b1f2d; background: #33060d; color: var(--text); font-size: 1rem; }
     
+    /* Stile Radio Impasti */
+    .impasti-container { display: flex; flex-direction: column; gap: 10px; background: #33060d; padding: 15px; border-radius: 6px; border: 1px solid #6b1f2d; }
+    .impasto-option { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+    .impasto-option input { margin-top: 4px; accent-color: var(--accent-gold); cursor: pointer; }
+    .impasto-label-title { font-weight: bold; color: var(--text); font-size: 0.95rem; }
+    .impasto-label-desc { font-size: 0.8rem; color: var(--text-muted); }
+
     .btn-invia { width: 100%; background: var(--success); color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-top: 15px; }
     .btn-invia:hover { opacity: 0.9; }
     
-    #cartSummary { margin-bottom: 15px; font-size: 0.95rem; line-height: 1.6; border-bottom: 1px dashed #334155; padding-bottom: 10px; }
+    #cartSummary { margin-bottom: 15px; font-size: 0.95rem; line-height: 1.6; border-bottom: 1px dashed #6b1f2d; padding-bottom: 10px; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1>🍕 PIZZERIA ALCHIMIA</h1>
-    <p>Elementi in evoluzione - Ordina direttamente dal tuo tavolo</p>
+    <h1>Pizzeria Alchimia</h1>
+    <p>Elementi in evoluzione — Ordina direttamente dal tuo tavolo</p>
   </header>
 
   <!-- LE CLASSICHE -->
@@ -208,7 +224,7 @@
 
   <!-- LE BIANCHE & SFIZIOSE -->
   <div class="menu-section">
-    <h2>Le Bianche & Sfiiziose</h2>
+    <h2>Le Bianche & Sfiziose</h2>
     
     <div class="item-card">
       <div class="item-info">
@@ -265,10 +281,38 @@
     </div>
   </div>
 
-  <!-- SEZIONE CARRELLO -->
+  <!-- SEZIONE CARRELLO & IMPIASTO -->
   <div class="cart-box">
     <h2>Il tuo Ordine</h2>
     <div id="cartSummary">Nessun prodotto selezionato.</div>
+
+    <!-- SCELTA IMPASTO -->
+    <div class="form-group">
+      <label>Scegli il Tipo di Impasto</label>
+      <div class="impasti-container">
+        <label class="impasto-option">
+          <input type="radio" name="tipoImpasto" value="Impasto Alchimia (Speciale)" checked>
+          <div>
+            <div class="impasto-label-title">Impasto Alchimia</div>
+            <div class="impasto-label-desc">Mix di Farina 1 e grano antico macinato a pietra[cite: 1]</div>
+          </div>
+        </label>
+        <label class="impasto-option">
+          <input type="radio" name="tipoImpasto" value="Impasto Classico">
+          <div>
+            <div class="impasto-label-title">Impasto Classico</div>
+            <div class="impasto-label-desc">Tradizionale a lievitazione naturale</div>
+          </div>
+        </label>
+        <label class="impasto-option">
+          <input type="radio" name="tipoImpasto" value="Impasto Integrale">
+          <div>
+            <div class="impasto-label-title">Impasto Integrale</div>
+            <div class="impasto-label-desc">Ricco di fibre e leggero</div>
+          </div>
+        </label>
+      </div>
+    </div>
 
     <!-- SELEZIONE TAVOLO -->
     <div class="form-group">
@@ -319,9 +363,9 @@
       let totale = 0;
       carrelloCorrente.forEach((item, index) => {
         totale += item.price;
-        html += `<li style="margin-bottom: 5px;">${item.name} - € ${item.price.toFixed(2)} <button style="color:red; background:none; border:none; cursor:pointer; margin-left:10px;" onclick="rimuoviItem(${index})">[rimuovi]</button></li>`;
+        html += `<li style="margin-bottom: 5px;">${item.name} - € ${item.price.toFixed(2)} <button style="color:#ff6b6b; background:none; border:none; cursor:pointer; margin-left:10px;" onclick="rimuoviItem(${index})">[rimuovi]</button></li>`;
       });
-      html += `</ul><div style="margin-top:10px; font-weight:bold; color:var(--success);">Totale: € ${totale.toFixed(2)}</div>`;
+      html += `</ul><div style="margin-top:10px; font-weight:bold; color:var(--accent-gold);">Totale: € ${totale.toFixed(2)}</div>`;
       summary.innerHTML = html;
     }
 
@@ -339,11 +383,17 @@
       const table = document.getElementById('tableNumber').value;
       const name = document.getElementById('custName').value.trim() || 'Cliente al Tavolo';
       const notes = document.getElementById('custNotes').value.trim();
+      
+      // Prende l'impasto selezionato
+      const impastoSelezionato = document.querySelector('input[name="tipoImpasto"]:checked').value;
 
       if (!table) {
         alert("Seleziona il numero del tavolo prima di inviare l'ordine!");
         return;
       }
+
+      // Aggiunge l'impasto scelto come nota o informazione principale per la cucina
+      const noteFinali = `Impasto: ${impastoSelezionato}${notes ? ' - Note: ' + notes : ''}`;
 
       const orderData = {
         id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
@@ -356,7 +406,7 @@
           time: 'Al Tavolo',
           address: ''
         },
-        notes: notes,
+        notes: noteFinali,
         statoPagamento: '🔴 DA PAGARE IN CASSA',
         stato: 'In attesa di conferma'
       };
