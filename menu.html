@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="UTF-8">
@@ -422,6 +422,563 @@
       document.getElementById('custName').value = '';
       document.getElementById('custNotes').value = '';
     });
+  </script>
+
+  <!-- ===================================================================
+       AGGIUNTE GRAFICHE 3D (tutto sotto questa riga è nuovo, il codice
+       sopra è rimasto identico)
+       =================================================================== -->
+  <style id="alchimia-3d-style">
+    /* ---------- Sfondo con luce calda ---------- */
+    body::before {
+      content: "";
+      position: fixed; inset: 0; z-index: -2; pointer-events: none;
+      background:
+        radial-gradient(ellipse at 20% 0%, rgba(212,175,55,.18), transparent 55%),
+        radial-gradient(ellipse at 90% 100%, rgba(180,40,60,.35), transparent 60%);
+    }
+    #fx-embers { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+
+    /* ---------- Titolo oro con riflesso animato ---------- */
+    h1 {
+      background: linear-gradient(100deg, #f3d2a2 20%, #fff6dc 40%, #d4af37 50%, #fff6dc 60%, #f3d2a2 80%);
+      background-size: 250% 100%;
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      text-shadow: none;
+      filter: drop-shadow(2px 3px 3px rgba(0,0,0,.55));
+      animation: fx-shine 6s linear infinite;
+    }
+    @keyframes fx-shine { to { background-position: -250% 0; } }
+
+    /* ---------- Pizza 3D rotante nell'header ---------- */
+    .pz-scene { perspective: 700px; width: 150px; height: 150px; margin: 0 auto 18px; position: relative; }
+    .pz-float { width: 100%; height: 100%; animation: fx-float 4s ease-in-out infinite; transform-style: preserve-3d; }
+    .pz-spin  { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; animation: fx-spin 14s linear infinite; }
+    @keyframes fx-spin  { from { transform: rotateX(58deg) rotateZ(0deg); } to { transform: rotateX(58deg) rotateZ(360deg); } }
+    @keyframes fx-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+    .pz-l { position: absolute; inset: 0; border-radius: 50%; }
+    .pz-edge1 { transform: translateZ(-6px); background: #8a4f1c; }
+    .pz-edge2 { transform: translateZ(-4px); background: #a8641f; }
+    .pz-edge3 { transform: translateZ(-2px); background: #bf7a2a; }
+    .pz-crust { transform: translateZ(0); background: radial-gradient(circle, #d99a4a 0 66%, #eab76c 70%, #c98a3d 100%); }
+    .pz-sauce { inset: 9%; transform: translateZ(2px); background: radial-gradient(circle, #d3382a 0 70%, #b32418 100%); }
+    .pz-cheese {
+      inset: 12%; transform: translateZ(4px);
+      background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.55) 0 8%, transparent 9%),
+        radial-gradient(circle at 68% 40%, rgba(255,255,255,.45) 0 9%, transparent 10%),
+        radial-gradient(circle at 45% 72%, rgba(255,255,255,.5) 0 8%, transparent 9%),
+        radial-gradient(circle, #f8e08e 0 100%);
+    }
+    .pz-top {
+      inset: 12%; transform: translateZ(7px);
+      background:
+        radial-gradient(circle at 28% 52%, #b3261e 0 9%, #7e150f 10% 11%, transparent 12%),
+        radial-gradient(circle at 62% 28%, #b3261e 0 9%, #7e150f 10% 11%, transparent 12%),
+        radial-gradient(circle at 70% 66%, #b3261e 0 9%, #7e150f 10% 11%, transparent 12%),
+        radial-gradient(circle at 40% 78%, #b3261e 0 8%, #7e150f 9% 10%, transparent 11%),
+        radial-gradient(circle at 50% 42%, #3f8f3a 0 5%, transparent 6%),
+        radial-gradient(circle at 36% 30%, #3f8f3a 0 4%, transparent 5%),
+        radial-gradient(circle at 78% 48%, #3f8f3a 0 4%, transparent 5%);
+    }
+    .pz-cut {
+      inset: 12%; transform: translateZ(8px);
+      background: repeating-conic-gradient(from 22.5deg, rgba(50,8,12,.45) 0 1.4deg, transparent 1.4deg 45deg);
+    }
+    .pz-shadow {
+      position: absolute; left: 12%; right: 12%; bottom: -14px; height: 18px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(0,0,0,.55), transparent 70%);
+      animation: fx-shadow 4s ease-in-out infinite;
+    }
+    @keyframes fx-shadow { 0%,100% { transform: scale(1); opacity: .9; } 50% { transform: scale(.82); opacity: .55; } }
+
+    /* ---------- Apparizione 3D delle sezioni e delle card ---------- */
+    .fx-rv { opacity: 0; transform: perspective(900px) translateY(34px) rotateX(-14deg); transition: opacity .7s ease, transform .7s cubic-bezier(.2,.8,.2,1); }
+    .fx-rv.fx-in { opacity: 1; transform: perspective(900px) translateY(0) rotateX(0); }
+
+    /* ---------- Card: inclinazione 3D + riflesso che segue il mouse ---------- */
+    .item-card {
+      position: relative; overflow: hidden;
+      transform-style: preserve-3d;
+      transition: transform .18s ease-out, box-shadow .25s ease, border-color .25s ease, opacity .7s ease;
+      will-change: transform;
+      background-image: linear-gradient(135deg, rgba(255,255,255,.05), transparent 45%);
+    }
+    .item-card::after {
+      content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .25s;
+      background: radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(255,232,170,.28), transparent 55%);
+    }
+    .item-card.fx-hover { box-shadow: 0 18px 28px rgba(0,0,0,.45), 0 0 0 1px rgba(212,175,55,.55); border-color: var(--accent-light); }
+    .item-card.fx-hover::after { opacity: 1; }
+    .item-card .item-info, .item-card .item-price, .item-card .btn-add { transform: translateZ(22px); }
+
+    /* ---------- Pulsanti 3D ---------- */
+    .btn-add {
+      position: relative; overflow: hidden;
+      box-shadow: 0 4px 0 #a8803a, 0 8px 14px rgba(0,0,0,.35);
+      transition: transform .12s ease, box-shadow .12s ease, background .2s;
+    }
+    .btn-add::before {
+      content: ""; position: absolute; top: 0; left: -80%; width: 50%; height: 100%;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.6), transparent);
+      transform: skewX(-20deg); transition: left .6s ease;
+    }
+    .btn-add:hover::before { left: 140%; }
+    .btn-add:hover { transform: translateY(-2px); box-shadow: 0 6px 0 #a8803a, 0 12px 18px rgba(0,0,0,.4); }
+    .btn-add:active { transform: translateY(3px); box-shadow: 0 1px 0 #a8803a, 0 2px 6px rgba(0,0,0,.4); }
+
+    .btn-invia {
+      position: relative; overflow: hidden;
+      box-shadow: 0 5px 0 #15803d, 0 10px 20px rgba(0,0,0,.4);
+      transition: transform .12s ease, box-shadow .12s ease;
+      animation: fx-pulse 2.6s ease-in-out infinite;
+    }
+    .btn-invia::before {
+      content: ""; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent);
+      transform: skewX(-20deg); animation: fx-sweep 3.2s ease-in-out infinite;
+    }
+    .btn-invia:hover { transform: translateY(-2px); box-shadow: 0 7px 0 #15803d, 0 14px 24px rgba(0,0,0,.45); }
+    .btn-invia:active { transform: translateY(4px); box-shadow: 0 1px 0 #15803d, 0 3px 8px rgba(0,0,0,.4); }
+    @keyframes fx-sweep { 0% { left: -60%; } 55%,100% { left: 150%; } }
+    @keyframes fx-pulse { 0%,100% { filter: drop-shadow(0 0 0 rgba(34,197,94,0)); } 50% { filter: drop-shadow(0 0 12px rgba(34,197,94,.55)); } }
+
+    /* ---------- Box ordine: profondità e "bump" quando aggiungi ---------- */
+    .cart-box { box-shadow: 0 22px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08); transition: transform .3s cubic-bezier(.3,1.6,.5,1); }
+    .cart-box.fx-bump { transform: scale(1.015) translateY(-3px); }
+    .impasti-container, .form-group select, .form-group input, .form-group textarea { box-shadow: inset 0 3px 8px rgba(0,0,0,.45); }
+    .form-group select:focus, .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--accent-light); box-shadow: inset 0 3px 8px rgba(0,0,0,.45), 0 0 0 3px rgba(212,175,55,.3); }
+
+    /* ---------- Titoli sezione con linea luminosa ---------- */
+    h2 { position: relative; }
+    h2::after { content: ""; position: absolute; left: 0; bottom: -1px; height: 2px; width: 70px; background: linear-gradient(90deg, #fff1c7, var(--accent-light), transparent); box-shadow: 0 0 10px var(--accent-light); }
+
+    /* ---------- Effetto "+1 🍕" che vola ---------- */
+    .fx-plus { position: fixed; z-index: 9999; pointer-events: none; font: bold 1.1rem 'Segoe UI', sans-serif; color: var(--accent-gold); text-shadow: 0 2px 6px rgba(0,0,0,.7); animation: fx-plus 1s ease-out forwards; }
+    @keyframes fx-plus { 0% { opacity: 0; transform: translate(-50%, 0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -70px) scale(1.25) rotate(-8deg); } }
+
+    /* ---------- Bollina carrello fluttuante ---------- */
+    #fx-cartfab {
+      position: fixed; right: 16px; bottom: 18px; z-index: 9998; display: none; align-items: center; gap: 10px;
+      padding: 12px 18px; border-radius: 999px; cursor: pointer; border: 1px solid var(--accent-light);
+      background: linear-gradient(145deg, #6b1f2d, #4f121b); color: var(--accent-gold);
+      font: bold 1rem 'Segoe UI', sans-serif;
+      box-shadow: 0 6px 0 #2d050c, 0 14px 24px rgba(0,0,0,.5);
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    #fx-cartfab.fx-show { display: flex; animation: fx-pop .45s cubic-bezier(.3,1.7,.5,1); }
+    #fx-cartfab:active { transform: translateY(4px); box-shadow: 0 2px 0 #2d050c, 0 4px 10px rgba(0,0,0,.5); }
+    #fx-cartfab .fx-count { background: var(--accent-gold); color: #2d050c; border-radius: 50%; min-width: 26px; height: 26px; display: grid; place-items: center; font-size: .9rem; }
+    @keyframes fx-pop { from { transform: scale(.3) translateY(40px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+    /* ---------- Accessibilità: meno movimento se richiesto ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      .pz-spin, .pz-float, .pz-shadow, h1, .btn-invia, .btn-invia::before { animation: none !important; }
+      .fx-rv { opacity: 1; transform: none; transition: none; }
+      #fx-embers { display: none; }
+    }
+    @media (max-width: 520px) {
+      .pz-scene { width: 120px; height: 120px; }
+      h1 { font-size: 2rem; }
+    }
+  </style>
+
+  <script id="alchimia-3d-script">
+  (function () {
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var canHover = window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    /* 1) Pizza 3D nell'header */
+    var header = document.querySelector('header');
+    if (header) {
+      var scene = document.createElement('div');
+      scene.className = 'pz-scene';
+      scene.setAttribute('aria-hidden', 'true');
+      scene.innerHTML =
+        '<div class="pz-float"><div class="pz-spin">' +
+        '<div class="pz-l pz-edge1"></div><div class="pz-l pz-edge2"></div><div class="pz-l pz-edge3"></div>' +
+        '<div class="pz-l pz-crust"></div><div class="pz-l pz-sauce"></div><div class="pz-l pz-cheese"></div>' +
+        '<div class="pz-l pz-top"></div><div class="pz-l pz-cut"></div>' +
+        '</div></div><div class="pz-shadow"></div>';
+      header.insertBefore(scene, header.firstChild);
+    }
+
+    /* 2) Braci dorate che salgono sullo sfondo */
+    if (!reduce) {
+      var cv = document.createElement('canvas');
+      cv.id = 'fx-embers';
+      document.body.appendChild(cv);
+      var ctx = cv.getContext('2d'), W, H, dpr = Math.min(window.devicePixelRatio || 1, 2), P = [];
+      function resize() {
+        W = innerWidth; H = innerHeight;
+        cv.width = W * dpr; cv.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+      function spawn(initial) {
+        return {
+          x: Math.random() * W, y: initial ? Math.random() * H : H + 10,
+          r: Math.random() * 2.2 + .6, vy: Math.random() * .5 + .2,
+          vx: (Math.random() - .5) * .3, ph: Math.random() * 6.28,
+          a: Math.random() * .5 + .25
+        };
+      }
+      resize();
+      var count = W < 600 ? 28 : 55;
+      for (var i = 0; i < count; i++) P.push(spawn(true));
+      addEventListener('resize', resize);
+      (function loop() {
+        ctx.clearRect(0, 0, W, H);
+        for (var i = 0; i < P.length; i++) {
+          var p = P[i];
+          p.y -= p.vy; p.ph += .02; p.x += p.vx + Math.sin(p.ph) * .25;
+          if (p.y < -10) P[i] = spawn(false);
+          var g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+          g.addColorStop(0, 'rgba(255,225,140,' + p.a + ')');
+          g.addColorStop(1, 'rgba(212,175,55,0)');
+          ctx.fillStyle = g;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 4, 0, 6.283); ctx.fill();
+        }
+        requestAnimationFrame(loop);
+      })();
+    }
+
+    /* 3) Apparizione 3D allo scroll */
+    var targets = document.querySelectorAll('.menu-section h2, .item-card, .cart-box');
+    if ('IntersectionObserver' in window && !reduce) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) { e.target.classList.add('fx-in'); io.unobserve(e.target); }
+        });
+      }, { threshold: .12 });
+      targets.forEach(function (el, i) {
+        el.classList.add('fx-rv');
+        el.style.transitionDelay = (i % 4) * 60 + 'ms';
+        io.observe(el);
+      });
+    }
+
+    /* 4) Inclinazione 3D delle card con riflesso */
+    if (canHover && !reduce) {
+      var cur = null;
+      document.addEventListener('pointermove', function (e) {
+        var card = e.target.closest && e.target.closest('.item-card');
+        if (cur && cur !== card) reset(cur);
+        cur = card;
+        if (!card) return;
+        var r = card.getBoundingClientRect();
+        var x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        card.style.transitionDelay = '0ms';
+        card.style.transform = 'perspective(800px) rotateX(' + ((.5 - y) * 9) + 'deg) rotateY(' + ((x - .5) * 11) + 'deg) translateZ(6px)';
+        card.style.setProperty('--mx', (x * 100) + '%');
+        card.style.setProperty('--my', (y * 100) + '%');
+        card.classList.add('fx-hover');
+      });
+      document.addEventListener('pointerleave', function () { if (cur) reset(cur); cur = null; });
+      function reset(c) {
+        c.style.transform = c.classList.contains('fx-rv') && !c.classList.contains('fx-in') ? '' : 'perspective(800px) rotateX(0) rotateY(0)';
+        c.classList.remove('fx-hover');
+      }
+    }
+
+    /* 5) Feedback quando aggiungi una pizza: "+1" che vola + bump del carrello */
+    var cartBox = document.querySelector('.cart-box');
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('.btn-add');
+      if (!b) return;
+      var r = b.getBoundingClientRect();
+      var s = document.createElement('div');
+      s.className = 'fx-plus'; s.textContent = '+1 🍕';
+      s.style.left = (r.left + r.width / 2) + 'px'; s.style.top = (r.top - 4) + 'px';
+      document.body.appendChild(s);
+      setTimeout(function () { s.remove(); }, 1000);
+      if (cartBox) {
+        cartBox.classList.add('fx-bump');
+        setTimeout(function () { cartBox.classList.remove('fx-bump'); }, 280);
+      }
+      if (navigator.vibrate) navigator.vibrate(18);
+    });
+
+    /* 6) Bollina carrello fluttuante (legge il carrello esistente, senza modificarlo) */
+    var fab = document.createElement('div');
+    fab.id = 'fx-cartfab';
+    fab.innerHTML = '<span>🛒 Il tuo ordine</span><span class="fx-count">0</span><span class="fx-tot"></span>';
+    document.body.appendChild(fab);
+    fab.addEventListener('click', function () {
+      if (cartBox) cartBox.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    function refreshFab() {
+      var n = 0, t = 0;
+      try { n = carrelloCorrente.length; carrelloCorrente.forEach(function (i) { t += i.price; }); } catch (err) {}
+      fab.querySelector('.fx-count').textContent = n;
+      fab.querySelector('.fx-tot').textContent = '€ ' + t.toFixed(2);
+      fab.classList.toggle('fx-show', n > 0);
+    }
+    var summary = document.getElementById('cartSummary');
+    if (summary && 'MutationObserver' in window) {
+      new MutationObserver(refreshFab).observe(summary, { childList: true, subtree: true, characterData: true });
+    }
+    refreshFab();
+  })();
+  </script>
+
+  <!-- ===================================================================
+       AGGIUNTA FOTO PIZZE (tutto quello sopra è rimasto identico; sotto è nuovo)
+       Come usare le tue foto vere: crea una cartella "foto" accanto a questo file
+       e salva le immagini con il numero della pizza: foto/01.jpg, foto/02.jpg ... foto/22.jpg
+       (vanno bene anche .png e .webp). Dove manca la foto compare un'illustrazione.
+       =================================================================== -->
+  <style id="alchimia-foto-style">
+    .item-info { flex: 1; min-width: 0; }
+
+    .pz-photo {
+      position: relative; flex: 0 0 auto; width: 92px; height: 92px; margin-right: 16px;
+      border-radius: 50%; cursor: zoom-in; overflow: hidden;
+      border: 2px solid var(--accent-light);
+      background: radial-gradient(circle at 35% 30%, #5d1823, #2d050c);
+      box-shadow: 0 8px 16px rgba(0,0,0,.5), 0 0 0 4px rgba(243,210,162,.12), inset 0 0 12px rgba(0,0,0,.5);
+      transform: translateZ(30px);
+      transition: transform .35s cubic-bezier(.2,.9,.3,1.3), box-shadow .3s ease;
+    }
+    .pz-photo::after {            /* riflesso lucido */
+      content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+      background: linear-gradient(135deg, rgba(255,255,255,.28) 0%, rgba(255,255,255,0) 40%);
+    }
+    .pz-photo img, .pz-photo svg { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .7s ease; }
+    .pz-photo svg { padding: 4px; filter: drop-shadow(0 3px 3px rgba(0,0,0,.45)); }
+    .item-card:hover .pz-photo, .item-card.fx-hover .pz-photo {
+      transform: translateZ(40px) scale(1.1) rotate(-4deg);
+      box-shadow: 0 14px 24px rgba(0,0,0,.6), 0 0 0 4px rgba(243,210,162,.3), 0 0 18px rgba(212,175,55,.45);
+    }
+    .item-card:hover .pz-photo svg, .item-card.fx-hover .pz-photo svg,
+    .item-card:hover .pz-photo img, .item-card.fx-hover .pz-photo img { transform: rotate(40deg) scale(1.05); }
+
+    /* ---------- Finestra ingrandita ---------- */
+    #pz-lightbox {
+      position: fixed; inset: 0; z-index: 10000; display: none; align-items: center; justify-content: center;
+      padding: 20px; background: rgba(20,2,6,.82); backdrop-filter: blur(6px); perspective: 1000px;
+    }
+    #pz-lightbox.pz-open { display: flex; animation: pz-fade .25s ease; }
+    @keyframes pz-fade { from { opacity: 0; } to { opacity: 1; } }
+    .pz-lb-card {
+      width: min(420px, 100%); text-align: center; padding: 26px 22px 22px; border-radius: 18px;
+      background: linear-gradient(160deg, #5f1722, #3b0911); border: 2px solid var(--accent-light);
+      box-shadow: 0 30px 60px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,255,255,.1);
+      font-family: 'Segoe UI', sans-serif; animation: pz-in .5s cubic-bezier(.2,1.2,.3,1);
+    }
+    @keyframes pz-in { from { opacity: 0; transform: rotateX(-35deg) translateY(40px) scale(.85); } to { opacity: 1; transform: none; } }
+    .pz-lb-pic { width: min(260px, 70vw); height: min(260px, 70vw); margin: 0 auto 16px; border-radius: 50%; overflow: hidden;
+      border: 3px solid var(--accent-light); box-shadow: 0 16px 30px rgba(0,0,0,.6); background: #2d050c; animation: pz-turn 18s linear infinite; }
+    .pz-lb-pic img, .pz-lb-pic svg { width: 100%; height: 100%; display: block; object-fit: cover; }
+    .pz-lb-pic svg { padding: 6px; }
+    @keyframes pz-turn { to { transform: rotate(360deg); } }
+    .pz-lb-card h3 { color: var(--accent-gold); font-size: 1.35rem; margin-bottom: 6px; font-family: 'Palatino Linotype', 'Times New Roman', serif; font-style: italic; }
+    .pz-lb-card p { color: var(--text-muted); font-size: .9rem; margin-bottom: 12px; line-height: 1.5; }
+    .pz-lb-price { color: var(--accent-gold); font-weight: bold; font-size: 1.3rem; margin-bottom: 16px; }
+    .pz-lb-actions { display: flex; gap: 10px; }
+    .pz-lb-actions button {
+      flex: 1; padding: 12px; border: 0; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer;
+      transition: transform .12s ease, box-shadow .12s ease;
+    }
+    .pz-lb-add { background: var(--accent-gold); color: #2d050c; box-shadow: 0 4px 0 #a8803a; }
+    .pz-lb-close { background: #33060d; color: var(--accent-gold); box-shadow: 0 4px 0 #1c0307; border: 1px solid #6b1f2d !important; }
+    .pz-lb-actions button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.4); }
+
+    @media (max-width: 520px) {
+      .pz-photo { width: 64px; height: 64px; margin-right: 10px; }
+      .item-price { margin-left: 8px; font-size: 1rem; }
+      .btn-add { padding: 8px 10px; margin-left: 6px; }
+    }
+    @media (prefers-reduced-motion: reduce) { .pz-lb-pic { animation: none; } .pz-lb-card, #pz-lightbox.pz-open { animation: none; } }
+  </style>
+
+  <script id="alchimia-foto-script">
+  (function () {
+    /* ====== IMPOSTAZIONI ====== */
+    var FOTO_CARTELLA = 'foto/';                      // cartella con le immagini
+    var FOTO_ESTENSIONI = ['jpg', 'png', 'webp'];     // estensioni provate in ordine
+    var FOTO_PERSONALIZZATE = {                       // facoltativo: link diretto per una pizza
+      // '16': 'https://tuosito.it/alchimia.jpg'
+    };
+
+    /* ====== Illustrazioni di riserva (generate dagli ingredienti) ====== */
+    function rng(seed) {
+      var a = seed >>> 0;
+      return function () {
+        a |= 0; a = a + 0x6D2B79F5 | 0;
+        var t = Math.imul(a ^ a >>> 15, 1 | a);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+      };
+    }
+    function f(n) { return n.toFixed(1); }
+    function shape(t, x, y, c, o, r, ang) {
+      var rot = ' transform="rotate(' + f(ang) + ' ' + f(x) + ' ' + f(y) + ')"';
+      switch (t) {
+        case 'leaf':  return '<ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="4.8" ry="2.3" fill="' + c + '"' + rot + '/>';
+        case 'disc':  return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '" fill="' + c + '" stroke="' + (o || 'rgba(0,0,0,.25)') + '" stroke-width=".8"/>';
+        case 'strip': return '<rect x="' + f(x - 4.5) + '" y="' + f(y - 1.1) + '" width="9" height="2.2" rx="1.1" fill="' + c + '"' + rot + '/>';
+        case 'chunk': return '<ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="' + f(r * 1.2) + '" ry="' + f(r * .8) + '" fill="' + c + '"' + rot + '/>';
+        case 'ring':  return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '" fill="none" stroke="' + c + '" stroke-width="1.3"/>';
+        case 'blob':  return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '" fill="' + c + '" stroke="rgba(0,0,0,.1)" stroke-width=".6"/>';
+        case 'flake': return '<ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="2.2" ry=".8" fill="' + c + '"' + rot + '/>';
+        default:      return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '" fill="' + c + '"/>';
+      }
+    }
+    /* parola chiave, forma, colori, ritaglio, quantità, raggio */
+    var TOP = [
+      [/basilico/,                  'leaf',  ['#2f7d32', '#43a047'], '', 5, 0],
+      [/salamino|salame piccante/,  'disc',  ['#b3261e'], '#7e150f', 7, 5.5],
+      [/acciughe/,                  'strip', ['#8a5a3a'], '', 6, 0],
+      [/capperi/,                   'dot',   ['#5f8a3a'], '', 9, 1.8],
+      [/tonno/,                     'chunk', ['#e0a58f', '#c98772'], '', 8, 3.2],
+      [/cipolla/,                   'ring',  ['#efdcf0'], '', 6, 3.2],
+      [/wurstel/,                   'disc',  ['#e59a8d'], '#c4695c', 7, 4.5],
+      [/patatine/,                  'strip', ['#f2c94c'], '', 11, 0],
+      [/prosciutto cotto/,          'chunk', ['#f3aaa4'], '', 7, 3.6],
+      [/funghi(?!\s+porcini)/,      'chunk', ['#e8d9bd', '#d8c3a0'], '', 7, 3],
+      [/porcini/,                   'chunk', ['#8a5a32'], '', 6, 3.6],
+      [/salsiccia/,                 'chunk', ['#9b5a3c'], '', 6, 3.2],
+      [/melanzane/,                 'chunk', ['#5b3a6e'], '', 6, 3.4],
+      [/zucchine/,                  'disc',  ['#7db356'], '#4f8a32', 6, 3.6],
+      [/peperoni/,                  'strip', ['#d6382a', '#f0b429'], '', 7, 0],
+      [/carciofi/,                  'leaf',  ['#8a9a4a'], '', 5, 0],
+      [/panna/,                     'blob',  ['#fffaf0'], '', 4, 4],
+      [/crudo/,                     'strip', ['#e58a8a'], '', 6, 0],
+      [/capocollo/,                 'disc',  ['#a8483a'], '#7e2d22', 6, 5],
+      [/stracciatella/,             'blob',  ['#fffdf5'], '', 5, 3.6],
+      [/mortadella/,                'disc',  ['#f0a6a6'], '#d98080', 6, 6],
+      [/pistacchio/,                'dot',   ['#8fb04a'], '', 14, 1.6],
+      [/burrata/,                   'blob',  ['#ffffff'], '', 1, 9],
+      [/bufala/,                    'blob',  ['#ffffff'], '', 5, 4.6],
+      [/gorgonzola/,                'chunk', ['#a9bdd0'], '', 5, 3.2],
+      [/emmental/,                  'chunk', ['#f4d35e'], '', 4, 3.2],
+      [/fontina/,                   'chunk', ['#f6d98a'], '', 4, 3.2],
+      [/speck/,                     'strip', ['#8b3a3a'], '', 8, 0],
+      [/scamorza/,                  'chunk', ['#f3d9a0'], '', 5, 3.4],
+      [/bresaola/,                  'strip', ['#7a2a2a'], '', 8, 0],
+      [/rucola/,                    'leaf',  ['#2e8b3a'], '', 10, 0],
+      [/grana|parmigiano/,          'flake', ['#fff4d6'], '', 14, 0],
+      [/pomodorini/,                'disc',  ['#d63b2b'], '#9d2418', 6, 3.6],
+      [/origano/,                   'dot',   ['#4e7d2a'], '', 18, .9]
+    ];
+
+    function place(R, a0, a1, rad) {
+      var a = a0 + R() * (a1 - a0), d = rad * Math.sqrt(R());
+      return [50 + d * Math.cos(a), 50 + d * Math.sin(a)];
+    }
+    function toppingsSvg(R, list, a0, a1, rad, mult) {
+      var out = '';
+      list.forEach(function (T) {
+        var n = Math.max(1, Math.round(T[4] * (mult || 1)));
+        for (var i = 0; i < n; i++) {
+          var p = place(R, a0, a1, rad);
+          out += shape(T[1], p[0], p[1], T[2][Math.floor(R() * T[2].length)], T[3], T[5], R() * 180);
+        }
+      });
+      return out;
+    }
+    function pick(re) { return TOP.filter(function (T) { return T[0].source === re; }); }
+
+    function calzoneSvg(id) {
+      return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs>' +
+        '<linearGradient id="cz' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0c27a"/><stop offset="1" stop-color="#c98235"/></linearGradient></defs>' +
+        '<path d="M6 68 Q6 24 50 24 Q94 24 94 68 Q94 78 84 78 L16 78 Q6 78 6 68Z" fill="url(#cz' + id + ')" stroke="#a66a28" stroke-width="1.5"/>' +
+        '<path d="M14 66 Q16 36 50 33" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3" stroke-linecap="round"/>' +
+        '<path d="M12 74 L88 74" stroke="#a66a28" stroke-width="1.2" stroke-dasharray="2.5 2.5"/>' +
+        '<path d="M42 38 Q50 46 58 38 M36 48 Q50 58 64 48" fill="none" stroke="#b97a30" stroke-width="1.4" stroke-linecap="round"/>' +
+        '<circle cx="30" cy="52" r=".9" fill="#fff6d8"/><circle cx="70" cy="50" r=".9" fill="#fff6d8"/><circle cx="55" cy="62" r=".9" fill="#fff6d8"/>' +
+        '<path d="M30 78 Q50 70 70 78" fill="none" stroke="#d3382a" stroke-width="2" opacity=".8"/></svg>';
+    }
+
+    function pizzaSvg(num, desc) {
+      if (num === '10') return calzoneSvg(num);
+      var d = desc.toLowerCase(), id = num, R = rng(parseInt(num, 10) * 7919 + 13);
+      var noSauce = /senza pomodoro/.test(d) || !/pomodoro/.test(d);
+      var cheese = /mozzarella|scamorza|fontina|emmental|gorgonzola|burrata|formaggi/.test(d);
+      var s = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs>' +
+        '<radialGradient id="cr' + id + '"><stop offset=".78" stop-color="#e9b96e"/><stop offset="1" stop-color="#c0792f"/></radialGradient>' +
+        '<radialGradient id="sa' + id + '"><stop offset="0" stop-color="#dc4a38"/><stop offset="1" stop-color="#b32a1c"/></radialGradient>' +
+        '<radialGradient id="ch' + id + '"><stop offset="0" stop-color="#fff0a8"/><stop offset="1" stop-color="#f1cf62"/></radialGradient></defs>';
+      s += '<circle cx="50" cy="50" r="48" fill="url(#cr' + id + ')"/>';
+      s += '<circle cx="50" cy="50" r="48" fill="none" stroke="#a96a28" stroke-width="1.2"/>';
+      s += '<circle cx="50" cy="50" r="41" fill="' + (noSauce ? '#f3e2bd' : 'url(#sa' + id + ')') + '"/>';
+      if (cheese) {
+        s += '<circle cx="50" cy="50" r="39.5" fill="url(#ch' + id + ')"/>';
+        for (var i = 0; i < 9; i++) { var p = place(R, 0, 6.283, 34); s += '<circle cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(2 + R() * 3) + '" fill="rgba(255,255,255,.5)"/>'; }
+        for (var j = 0; j < 5; j++) { var q = place(R, 0, 6.283, 34); s += '<circle cx="' + f(q[0]) + '" cy="' + f(q[1]) + '" r="' + f(1.5 + R() * 2) + '" fill="rgba(214,150,40,.35)"/>'; }
+      }
+      if (num === '06') {                 /* Nuova 4 Stagioni: 4 spicchi */
+        var PI = Math.PI;
+        s += toppingsSvg(R, pick('basilico'), 0, PI / 2, 33, .6);
+        s += toppingsSvg(R, pick('prosciutto cotto').concat(pick('funghi(?!\\s+porcini)')), PI / 2, PI, 33, .6);
+        s += toppingsSvg(R, pick('salamino|salame piccante'), PI, PI * 1.5, 33, .6);
+        s += toppingsSvg(R, pick('acciughe'), PI * 1.5, PI * 2, 33, .8);
+        s += '<path d="M50 9 V91 M9 50 H91" stroke="rgba(120,40,20,.55)" stroke-width="1.2"/>';
+      } else {
+        var list = TOP.filter(function (T) { return T[0].test(d); });
+        s += toppingsSvg(R, list, 0, 6.283, 34, 1);
+      }
+      return s + '</svg>';
+    }
+
+    /* ====== Inserimento foto accanto a ogni pizza ====== */
+    function loadReal(box, num) {
+      var urls = [];
+      if (FOTO_PERSONALIZZATE[num]) urls.push(FOTO_PERSONALIZZATE[num]);
+      FOTO_ESTENSIONI.forEach(function (e) { urls.push(FOTO_CARTELLA + num + '.' + e); });
+      (function next(i) {
+        if (i >= urls.length) return;
+        var im = new Image();
+        im.alt = box.getAttribute('data-name') || '';
+        im.loading = 'lazy';
+        im.onload = function () { box.innerHTML = ''; box.appendChild(im); box.setAttribute('data-real', '1'); };
+        im.onerror = function () { next(i + 1); };
+        im.src = urls[i];
+      })(0);
+    }
+
+    document.querySelectorAll('.item-card').forEach(function (card) {
+      var h = card.querySelector('h3'), p = card.querySelector('.item-info p');
+      if (!h) return;
+      var m = h.textContent.match(/^\s*(\d+)\s*-\s*(.*)$/);
+      if (!m) return;
+      var num = m[1], name = m[2];
+      var box = document.createElement('div');
+      box.className = 'pz-photo';
+      box.setAttribute('data-name', name);
+      box.setAttribute('role', 'button');
+      box.setAttribute('aria-label', 'Ingrandisci ' + name);
+      box.innerHTML = pizzaSvg(num, p ? p.textContent : '');
+      card.insertBefore(box, card.firstChild);
+      loadReal(box, num);
+    });
+
+    /* ====== Finestra ingrandita ====== */
+    var lb = document.createElement('div');
+    lb.id = 'pz-lightbox';
+    lb.innerHTML = '<div class="pz-lb-card"><div class="pz-lb-pic"></div><h3></h3><p></p><div class="pz-lb-price"></div>' +
+      '<div class="pz-lb-actions"><button class="pz-lb-close" type="button">Chiudi</button><button class="pz-lb-add" type="button">Aggiungi 🍕</button></div></div>';
+    document.body.appendChild(lb);
+    var currentBtn = null;
+    function closeLb() { lb.classList.remove('pz-open'); currentBtn = null; }
+    document.addEventListener('click', function (e) {
+      var ph = e.target.closest && e.target.closest('.pz-photo');
+      if (ph) {
+        var card = ph.closest('.item-card');
+        lb.querySelector('.pz-lb-pic').innerHTML = ph.innerHTML;
+        lb.querySelector('h3').textContent = card.querySelector('h3').textContent;
+        lb.querySelector('p').textContent = card.querySelector('.item-info p').textContent;
+        lb.querySelector('.pz-lb-price').textContent = card.querySelector('.item-price').textContent;
+        currentBtn = card.querySelector('.btn-add');
+        lb.classList.add('pz-open');
+        return;
+      }
+      if (e.target === lb || e.target.closest('.pz-lb-close')) closeLb();
+      else if (e.target.closest('.pz-lb-add') && currentBtn) { currentBtn.click(); closeLb(); }
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeLb(); });
+  })();
   </script>
 </body>
 </html>
