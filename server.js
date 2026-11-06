@@ -1,39 +1,36 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
-const path = require('path');
-
+const fs = require('fs');
+const path = path = require('path');
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const PORT = process.env.PORT || 3000;
 
-// Serve i file statici dalla cartella principale
-app.use(express.static(path.join(__dirname)));
+// Middleware per leggere il formato JSON e servire i file statici
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Memoria temporanea degli ordini attivi
-let listaOrdini = [];
+const MENU_FILE = path.join(__dirname, 'menu.json');
 
-io.on('connection', (socket) => {
-  console.log('Un utente si è connesso:', socket.id);
-
-  // Appena si connette qualcuno (es. la cucina), gli manda gli ordini attuali
-  socket.emit('carica_ordini', listaOrdini);
-
-  // Ricezione di un nuovo ordine (da menu.html o asporto.html)
-  socket.on('nuovo_ordine', (ordine) => {
-    console.log('Nuovo ordine ricevuto:', ordine);
-    listaOrdini.push(ordine);
-
-    // Invia l'ordine aggiornato a TUTTI (cucina inclusa)
-    io.emit('nuovo_ordine_cucina', ordine);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Utente disconnesso:', socket.id);
-  });
+// Rotta per leggere il menu
+app.get('/api/menu', (req, res) => {
+    fs.readFile(MENU_FILE, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).json({ error: 'Errore nella lettura del menu.' });
+        }
+        res.json(JSON.parse(data));
+    });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server avviato sulla porta ${PORT}`);
+// Rotta per aggiornare il menu (aggiunta o modifica pizze)
+app.post('/api/menu', (req, res) => {
+    const newMenu = req.body;
+    fs.writeFile(MENU_FILE, JSON.stringify(newMenu, null, 2), 'utf8', (err) => {
+        if (err) {
+            return res.status(500).json({ error: 'Errore nel salvataggio del menu.' });
+        }
+        res.json({ success: true, message: 'Menu aggiornato con successo!' });
+    });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server avviato sulla porta ${PORT}`);
 });
