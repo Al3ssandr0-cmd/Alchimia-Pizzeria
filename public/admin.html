@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Gestione Menu Pizzeria Alchimia</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 20px auto; padding: 20px; background: #f9f9f9; }
+        .card { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        button { padding: 8px 12px; cursor: pointer; }
+        .btn-on { background-color: #4CAF50; color: white; border: none; border-radius: 4px; }
+        .btn-off { background-color: #f44336; color: white; border: none; border-radius: 4px; }
+        input, button[type="submit"] { padding: 8px; margin: 4px 0; width: 100%; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+
+    <h1>Gestione Menu - Pizzeria Alchimia</h1>
+
+    <!-- Sezione Aggiungi Prodotto -->
+    <div class="card">
+        <h3>Aggiungi Nuovo Prodotto</h3>
+        <form id="addForm">
+            <input type="text" id="nome" placeholder="Nome Pizza / Prodotto" required>
+            <input type="text" id="ingredienti" placeholder="Ingredienti" required>
+            <input type="number" id="prezzo" step="0.01" placeholder="Prezzo (€)" required>
+            <button type="submit" style="background: #2196F3; color: white; border: none; border-radius: 4px; font-weight: bold;">Aggiungi al Menu</button>
+        </form>
+    </div>
+
+    <!-- Lista Prodotti Esistenti -->
+    <div class="card">
+        <h3>Prodotti Attuali</h3>
+        <div id="menuList">Caricamento menu...</div>
+    </div>
+
+    <script>
+        async function loadAdminMenu() {
+            const res = await fetch('/api/admin/menu');
+            const menu = await res.json();
+            const container = document.getElementById('menuList');
+            container.innerHTML = '';
+
+            menu.forEach(item => {
+                container.innerHTML += `
+                    <div class="item">
+                        <div>
+                            <strong>${item.nome}</strong> - €${item.prezzo.toFixed(2)}<br>
+                            <small>${item.ingredienti}</small>
+                        </div>
+                        <button class="${item.attivo ? 'btn-on' : 'btn-off'}" onclick="toggleItem('${item.id}')">
+                            ${item.attivo ? 'ON (Visibile)' : 'OFF (Nascosto)'}
+                        </button>
+                    </div>
+                `;
+            });
+        }
+
+        async function toggleItem(id) {
+            await fetch(`/api/admin/toggle/${id}`, { method: 'PATCH' });
+            loadAdminMenu();
+        }
+
+        document.getElementById('addForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newItem = {
+                nome: document.getElementById('nome').value,
+                ingredienti: document.getElementById('ingredienti').value,
+                prezzo: parseFloat(document.getElementById('prezzo').value),
+                categoria: "Pizze",
+                attivo: true
+            };
+
+            await fetch('/api/admin/prodotto', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newItem)
+            });
+
+            document.getElementById('addForm').reset();
+            loadAdminMenu();
+        });
+
+        loadAdminMenu();
+    </script>
+</body>
+</html>
