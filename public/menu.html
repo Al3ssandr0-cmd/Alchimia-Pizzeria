@@ -30,7 +30,6 @@
       background: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(236, 138, 60, .22), transparent 60%),
                   radial-gradient(ellipse 60% 40% at 100% 100%, rgba(184, 96, 31, .18), transparent 60%);
     }
-    #fx-embers { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
     button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
 
@@ -82,17 +81,6 @@
     .btn-ghost { border: 1px solid var(--line-strong); color: var(--cream); background: rgba(255, 255, 255, .02); }
     .btn-ghost:hover { background: rgba(236, 138, 60, .08); }
 
-    .pz-fallback { position: absolute; left: 50%; top: 50%; width: 200px; height: 200px; transform: translate(-50%, -50%) rotateX(55deg); border-radius: 50%;
-      background: radial-gradient(circle at 35% 40%, #fff6e6 0 7%, transparent 8%),
-                  radial-gradient(circle at 62% 32%, #fff6e6 0 8%, transparent 9%),
-                  radial-gradient(circle at 58% 66%, #fff6e6 0 8%, transparent 9%),
-                  radial-gradient(circle at 40% 64%, #2f7a2e 0 4%, transparent 5%),
-                  radial-gradient(circle at 55% 48%, #2f7a2e 0 4%, transparent 5%),
-                  radial-gradient(circle, #c8321f 0 72%, #e6ac62 74% 88%, #b56d2a 100%);
-      box-shadow: 0 30px 40px rgba(0,0,0,.5); animation: fb-spin 16s linear infinite; }
-    .pizza-stage.is-fallback { perspective: 700px; }
-    @keyframes fb-spin { to { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(360deg); } }
-
     .cat-nav {
       position: sticky; top: 0; z-index: 50; margin: 28px -16px 8px; padding: 10px 16px;
       background: rgba(31, 19, 15, .82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -119,7 +107,6 @@
     }
     @media (hover: hover) {
       .card:hover { border-color: var(--line-strong); transform: translateY(-2px); box-shadow: var(--shadow); }
-      .card:hover .pz-photo > * { transform: rotate(35deg) scale(1.05); }
     }
     .card.in-cart { border-color: rgba(236, 138, 60, .6); }
 
@@ -128,9 +115,8 @@
       background: radial-gradient(circle at 35% 30%, #4a3024, #1a0f0b);
       box-shadow: 0 8px 18px rgba(0, 0, 0, .45), 0 0 0 3px rgba(236, 138, 60, .18);
     }
-    .pz-photo > * { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .8s cubic-bezier(.2, .8, .2, 1); }
+    .pz-photo > * { width: 100%; height: 100%; display: block; object-fit: cover; }
     .pz-photo svg { padding: 3px; }
-    .pz-photo::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%); }
 
     .card-info { flex: 1; min-width: 0; }
     .card-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin-bottom: 3px; }
@@ -148,11 +134,8 @@
     .add {
       display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
       background: linear-gradient(180deg, var(--orange-2), var(--orange)); color: #2a1408; font-weight: 600; font-size: .85rem;
-      box-shadow: 0 4px 12px rgba(236, 138, 60, .3), inset 0 1px 0 rgba(255,255,255,.35); transition: transform .12s, box-shadow .2s;
+      box-shadow: 0 4px 12px rgba(236, 138, 60, .3), inset 0 1px 0 rgba(255,255,255,.35);
     }
-    .add:hover { box-shadow: 0 6px 18px rgba(236, 138, 60, .5), inset 0 1px 0 rgba(255,255,255,.35); }
-    .add:active { transform: scale(.92); }
-    .add .plus { font-size: 1.15rem; line-height: 1; font-weight: 700; }
     .qty-badge {
       position: absolute; top: -8px; left: 70px; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 999px;
       background: var(--orange); color: #2a1408; font-size: .78rem; font-weight: 700; display: grid; place-items: center;
@@ -160,25 +143,18 @@
     }
     .card.in-cart .qty-badge { transform: scale(1); }
 
-    .fx-rv { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s cubic-bezier(.2, .8, .2, 1); }
-    .fx-rv.fx-in { opacity: 1; transform: none; }
-
     .cart-box {
       margin-top: 34px; padding: 22px 18px; border-radius: 24px;
       background: linear-gradient(170deg, var(--surface-2), var(--bg-2));
-      border: 1px solid var(--line-strong); box-shadow: 0 24px 50px rgba(0, 0, 0, .45); transition: transform .3s cubic-bezier(.3, 1.6, .5, 1);
+      border: 1px solid var(--line-strong); box-shadow: 0 24px 50px rgba(0, 0, 0, .45);
     }
-    .cart-box.fx-bump { transform: scale(1.01); }
     .cart-box > h2 { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 600; font-size: 1.6rem; margin-bottom: 14px; }
-
     .cart-empty { color: var(--muted); font-size: .9rem; text-align: center; padding: 18px; border: 1px dashed var(--line-strong); border-radius: 14px; }
     .cart-list { list-style: none; }
     .cart-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
     .cart-row .name { flex: 1; min-width: 0; font-size: .92rem; }
-    .cart-row .name small { display: block; color: var(--muted); font-size: .75rem; }
     .stepper { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; }
     .stepper button { width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem; font-weight: 600; color: var(--orange); }
-    .stepper button:hover { background: rgba(236, 138, 60, .12); }
     .stepper span { min-width: 22px; text-align: center; font-weight: 600; font-size: .9rem; }
     .cart-row .line-tot { width: 70px; text-align: right; font-weight: 600; font-size: .92rem; }
     .cart-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 14px; font-size: 1.05rem; }
@@ -189,10 +165,10 @@
     .form-label .req { color: var(--danger); }
 
     .choice-list { display: grid; gap: 8px; }
-    .choice { position: relative; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; transition: border-color .2s, background .2s; }
+    .choice { position: relative; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; }
     .choice input { position: absolute; opacity: 0; pointer-events: none; }
-    .choice .dot { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line-strong); display: grid; place-items: center; transition: border-color .2s; }
-    .choice .dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); transform: scale(0); transition: transform .2s cubic-bezier(.3, 1.7, .5, 1); }
+    .choice .dot { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line-strong); display: grid; place-items: center; }
+    .choice .dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); transform: scale(0); transition: transform .2s; }
     .choice:has(input:checked) { border-color: var(--orange); background: rgba(236, 138, 60, .08); }
     .choice:has(input:checked) .dot { border-color: var(--orange); }
     .choice:has(input:checked) .dot::after { transform: scale(1); }
@@ -204,64 +180,28 @@
     .table-chip input { position: absolute; opacity: 0; pointer-events: none; }
     .table-chip > span {
       display: grid; place-items: center; height: 52px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg);
-      font-weight: 700; font-size: 1.15rem; line-height: 1.2; text-align: center; cursor: pointer; transition: all .2s;
+      font-weight: 700; font-size: 1.15rem; text-align: center; cursor: pointer;
     }
-    .table-chip span small { display: block; font-size: .6rem; font-weight: 500; color: var(--muted); letter-spacing: .1em; text-transform: uppercase; line-height: 1; margin-bottom: -8px; }
-    .table-chip input:checked + span { background: var(--orange); color: #2a1408; border-color: var(--orange); box-shadow: 0 6px 16px rgba(236, 138, 60, .35); }
-    .table-chip input:checked + span small { color: #5a3010; }
-    .shake { animation: shake .45s; }
-    @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+    .table-chip span small { display: block; font-size: .6rem; font-weight: 500; color: var(--muted); text-transform: uppercase; }
+    .table-chip input:checked + span { background: var(--orange); color: #2a1408; border-color: var(--orange); }
 
-    .field { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--cream); font: inherit; font-size: 1rem; resize: vertical; transition: border-color .2s, box-shadow .2s; }
-    .field::placeholder { color: #7f6a5d; }
-    .field:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(236, 138, 60, .2); }
-
+    .field { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--cream); font: inherit; }
+    .field:focus { outline: none; border-color: var(--orange); }
     .btn-invia {
-      width: 100%; margin-top: 24px; padding: 17px; border-radius: 16px; font-size: 1.05rem; font-weight: 700; letter-spacing: .04em;
-      background: linear-gradient(180deg, var(--orange-2), var(--orange)); color: #2a1408;
-      box-shadow: 0 6px 0 var(--orange-dark), 0 14px 26px rgba(0, 0, 0, .4); transition: transform .12s, box-shadow .12s;
+      width: 100%; margin-top: 24px; padding: 17px; border-radius: 16px; font-size: 1.05rem; font-weight: 700;
+      background: linear-gradient(180deg, var(--orange-2), var(--orange)); color: #2a1408; cursor: pointer;
     }
-    .btn-invia:hover { filter: brightness(1.05); }
-    .btn-invia:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--orange-dark), 0 6px 12px rgba(0, 0, 0, .4); }
-    .pay-note { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 12px; }
-
     footer { text-align: center; color: #7f6a5d; font-size: .78rem; padding: 34px 0 10px; }
 
     #cart-bar {
       position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 60;
       width: min(728px, calc(100% - 24px)); transform: translate(-50%, 140%);
-      display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 18px; border-radius: 999px;
-      background: rgba(47, 30, 23, .92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-      border: 1px solid var(--line-strong); box-shadow: 0 16px 40px rgba(0, 0, 0, .55); transition: transform .45s cubic-bezier(.3, 1.4, .5, 1);
+      display: flex; align-items: center; gap: 12px; padding: 10px 18px; border-radius: 999px;
+      background: rgba(47, 30, 23, .92); border: 1px solid var(--line-strong); transition: transform .45s;
     }
     #cart-bar.show { transform: translate(-50%, 0); }
-    #cart-bar .cb-count { background: var(--orange); color: #2a1408; font-weight: 700; min-width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: .85rem; }
-    #cart-bar .cb-text { flex: 1; font-size: .9rem; }
-    #cart-bar .cb-text b { color: var(--orange-2); }
-    #cart-bar .btn { padding: 10px 18px; }
-    .pop { animation: pop .4s cubic-bezier(.3, 1.8, .5, 1); }
-    @keyframes pop { 40% { transform: scale(1.35); } }
-
-    #pz-lightbox { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15, 8, 5, .8); backdrop-filter: blur(8px); }
-    #pz-lightbox.open { display: flex; animation: fade .25s ease; }
-    @keyframes fade { from { opacity: 0; } }
-    .lb-card { width: min(400px, 100%); text-align: center; padding: 26px 22px 22px; border-radius: 26px; background: linear-gradient(165deg, var(--surface-2), var(--bg)); border: 1px solid var(--line-strong); box-shadow: 0 30px 60px rgba(0,0,0,.6); }
-    .lb-pic { width: min(240px, 66vw); aspect-ratio: 1; margin: 0 auto 18px; border-radius: 50%; overflow: hidden; box-shadow: 0 18px 34px rgba(0,0,0,.6), 0 0 0 4px rgba(236,138,60,.25); }
-    .lb-pic > * { width: 100%; height: 100%; display: block; object-fit: cover; }
-    .lb-card h3 { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 1.5rem; font-weight: 600; }
-    .lb-card p { color: var(--muted); font-size: .9rem; margin: 6px 0 12px; }
-    .lb-price { font-size: 1.4rem; font-weight: 700; color: var(--orange-2); margin-bottom: 18px; }
-    .lb-actions { display: flex; gap: 10px; }
-    .lb-actions .btn { flex: 1; }
-
-    #toast { position: fixed; left: 50%; top: 18px; z-index: 200; transform: translate(-50%, -160%); max-width: calc(100% - 32px);
-      padding: 12px 18px; border-radius: 14px; font-weight: 500; font-size: .92rem; background: var(--surface-2); border: 1px solid var(--line-strong);
-      box-shadow: 0 16px 40px rgba(0,0,0,.5); transition: transform .4s cubic-bezier(.3, 1.4, .5, 1); }
-    #toast.show { transform: translate(-50%, 0); }
-    #toast.ok { border-color: var(--basil); }
-    #toast.err { border-color: var(--danger); }
-    .fx-plus { position: fixed; z-index: 150; pointer-events: none; font-weight: 700; color: var(--orange-2); text-shadow: 0 2px 6px rgba(0,0,0,.7); animation: fx-plus .9s ease-out forwards; }
-    @keyframes fx-plus { 0% { opacity: 0; transform: translate(-50%, 0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60px) scale(1.2); } }
+    #cart-bar .cb-count { background: var(--orange); color: #2a1408; font-weight: 700; min-width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; }
+    #cart-bar .cb-text { flex: 1; }
   </style>
 </head>
 <body>
@@ -277,7 +217,7 @@
         </div>
         <div class="logo-sub">Elementi in evoluzione</div>
       </div>
-      <p class="header-note" id="headerNote">Ordina direttamente dal tuo tavolo</p>
+      <p class="header-note">Ordina direttamente dal tuo tavolo</p>
     </header>
 
     <section class="hero">
@@ -322,7 +262,7 @@
         </div>
       </div>
 
-      <div class="form-group" id="tableGroup">
+      <div class="form-group">
         <span class="form-label">Il tuo tavolo <span class="req">*</span></span>
         <div class="tables" id="tables"></div>
       </div>
@@ -338,7 +278,6 @@
       </div>
 
       <button type="button" class="btn-invia" id="btnInviaOrdine">INVIA ORDINE IN CUCINA</button>
-      <p class="pay-note">Il pagamento si effettua in cassa a fine pasto.</p>
     </section>
 
     <footer>Pizzeria Alchimia 3.0</footer>
@@ -349,19 +288,41 @@
     <span class="cb-text" id="cbText"></span>
     <button class="btn btn-primary" type="button" id="cbGo">Vedi ordine</button>
   </div>
-  <div id="toast"></div>
 
   <script>
+    // LISTA COMPLETA DELLE PIZZE
     const MENU = [
       { id: 'classiche', titolo: 'Le Classiche', pizze: [
         ['01', 'Margherita', 'Pomodoro, mozzarella, basilico', 5.00],
-        ['02', 'Margheritella', 'Pomodoro, basilico, parmigiano', 5.50],
+        ['02', 'Margheritella', 'Pomodoro, basilico, parmigiano grattugiato', 5.50],
         ['03', 'Margherita senza lattosio', 'Pomodoro, mozzarella senza lattosio', 5.50, 'free'],
-        ['04', 'Napoli', 'Pomodoro, mozzarella, acciughe, capperi', 6.00],
-        ['05', 'Diavola', 'Pomodoro, mozzarella, salamino piccante', 6.50, 'hot']
+        ['04', 'Napoli', 'Pomodoro, mozzarella, acciughe, capperi, origano', 6.00],
+        ['05', 'Diavola', 'Pomodoro, mozzarella, salamino piccante', 6.50, 'hot'],
+        ['06', 'Nuova 4 Stagioni', 'Base pomodoro e mozzarella, divisa in 4 spicchi: Margherita, Basilico, Cotto e Funghi, Salame Piccante, Acciughe', 7.50],
+        ['07', 'Tonno e Cipolla', 'Pomodoro, mozzarella, tonno, cipolla', 7.50],
+        ['08', 'Wurstel e Patatine', 'Mozzarella, wurstel, patatine fritte', 7.00],
+        ['09', 'Capricciosa', 'Pomodoro, mozzarella, prosciutto cotto, funghi', 7.00],
+        ['10', 'Calzone', 'Pomodoro, mozzarella, prosciutto cotto, funghi', 7.00],
+        ['11', 'Porcini e Salsiccia', 'Pomodoro, mozzarella, funghi porcini, salsiccia', 8.50],
+        ['12', 'Ortolana', 'Pomodoro, mozzarella, melanzane, zucchine, peperoni', 7.00],
+        ['13', 'Completa', 'Pomodoro, mozzarella, prosciutto cotto, capperi, funghi, carciofi', 7.50],
+        ['14', 'Principessa', 'Pomodoro, mozzarella, panna e crudo', 8.00]
+      ]},
+      { id: 'speciali', titolo: 'Le Speciali', pizze: [
+        ['15', 'Martinese', 'Pomodoro, mozzarella, capocollo di Martina Franca, stracciatella', 8.00],
+        ['16', 'Alchimia', 'Mozzarella, mortadella, pesto di pistacchio, burrata', 10.00, 'firma']
+      ]},
+      { id: 'bianche', titolo: 'Le Bianche & Sfiziose', pizze: [
+        ['17', 'Bufalina', 'Senza pomodoro, mozzarella, mozzarella di bufala fresca', 8.00],
+        ['18', '4 Formaggi', 'Mozzarella, gorgonzola, emmental, fontina', 8.00],
+        ['19', 'Fumè', 'Speck e scamorza', 8.00],
+        ['20', 'Bresaola e Rucola', 'Bresaola, rucola, scaglie di grana, citronette', 8.50],
+        ['21', 'Furore', 'Mozzarella, tonno, scamorza affumicata', 8.00],
+        ['22', 'Fresca', 'Mozzarella, pomodorini freschi, scaglie di grana, funghi (tutto in uscita)', 7.50]
       ]}
     ];
     const NUM_TAVOLI = 8;
+    const TAG_LABEL = { firma: '★ Firma', hot: '🌶 Piccante', free: 'Senza lattosio' };
     const euro = n => n.toFixed(2).replace('.', ',');
     const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -369,13 +330,14 @@
       const main = document.getElementById('menu'), nav = document.getElementById('catNav');
       MENU.forEach(sec => {
         nav.insertAdjacentHTML('beforeend', `<a href="#${sec.id}" data-sec="${sec.id}">${esc(sec.titolo)}</a>`);
-        let html = `<section class="menu-section" id="${sec.id}"><div class="section-head"><h2>${esc(sec.titolo)}</h2></div>`;
+        let html = `<section class="menu-section" id="${sec.id}"><div class="section-head"><h2>${esc(sec.titolo)}</h2><span class="count">${sec.pizze.length}</span></div>`;
         sec.pizze.forEach(([num, nome, desc, prezzo, tag]) => {
-          html += `<article class="card" data-name="${esc(num + ' - ' + nome)}" data-price="${prezzo}">
-            <div class="pz-photo" role="button" tabindex="0"></div>
+          const full = `${num} - ${nome}`;
+          html += `<article class="card" data-name="${esc(full)}" data-price="${prezzo}">
+            <div class="pz-photo" role="button"></div>
             <span class="qty-badge"></span>
             <div class="card-info">
-              <div class="card-title"><span class="num">${num}</span><h3>${esc(nome)}</h3></div>
+              <div class="card-title"><span class="num">${num}</span><h3>${esc(nome)}</h3>${tag ? `<span class="tag ${tag}">${TAG_LABEL[tag]}</span>` : ''}</div>
               <p>${esc(desc)}</p>
             </div>
             <div class="card-side">
@@ -390,7 +352,7 @@
         const b = e.target.closest('.add');
         if (!b) return;
         const card = b.closest('.card');
-        aggiungiAlCarrello(card.dataset.name, parseFloat(card.dataset.price), b);
+        aggiungiAlCarrello(card.dataset.name, parseFloat(card.dataset.price));
       });
 
       const tables = document.getElementById('tables');
@@ -399,7 +361,7 @@
       }
     })();
 
-    // CONNESSIONE SOCKET.IO FORZATA E ASSOLUTA
+    // Connessione Socket.io
     const SOCKET_URL = window.location.origin.includes('onrender.com') ? window.location.origin : 'https://alchimia-pizzeria.onrender.com';
     let socket = null;
     try {
@@ -410,7 +372,7 @@
 
     let carrelloCorrente = [];
 
-    function aggiungiAlCarrello(nome, prezzo, fromEl) {
+    function aggiungiAlCarrello(nome, prezzo) {
       carrelloCorrente.push({ name: nome, price: prezzo, selectedExtras: [] });
       aggiornaVistaCarrello();
     }
@@ -455,14 +417,17 @@
       const b = e.target.closest('button[data-act]');
       if (!b) return;
       if (b.dataset.act === 'minus') rimuoviUno(b.dataset.name);
-      else { carrelloCorrente.push({ name: b.dataset.name, price: parseFloat(b.dataset.price), selectedExtras: [] }); aggiornaVistaCarrello(); }
+      else { carrelloCorrente.push({ name: b.dataset.name, price: parseFloat(b.dataset.price) }); aggiornaVistaCarrello(); }
     });
 
     document.getElementById('btnInviaOrdine').addEventListener('click', () => {
-      if (!carrelloCorrente.length) { alert('Carrello vuoto!'); return; }
+      if (!carrelloCorrente.length) { alert('Il carrello è vuoto!'); return; }
       const tSel = document.querySelector('input[name="tavolo"]:checked');
-      if (!tSel) { alert('Seleziona il tavolo!'); return; }
-      if (!socket) { alert('Connessione cucina non attiva.'); return; }
+      if (!tSel) { alert('Seleziona il tuo tavolo!'); return; }
+      if (!socket) { alert('Connessione con la cucina non attiva.'); return; }
+
+      const impasto = document.querySelector('input[name="tipoImpasto"]:checked').value;
+      const notes = document.getElementById('custNotes').value.trim();
 
       const orderData = {
         id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
@@ -470,13 +435,13 @@
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         items: carrelloCorrente,
         customer: { name: document.getElementById('custName').value || 'Cliente', phone: '', time: 'Al Tavolo', address: '' },
-        notes: document.getElementById('custNotes').value,
+        notes: `Impasto: ${impasto}${notes ? ' - Note: ' + notes : ''}`,
         statoPagamento: '🔴 DA PAGARE',
         stato: 'In attesa di conferma'
       };
 
       socket.emit('nuovo_ordine', orderData);
-      alert('Ordine inviato con successo!');
+      alert('✅ Ordine inviato in cucina!');
       carrelloCorrente = [];
       aggiornaVistaCarrello();
     });
