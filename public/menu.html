@@ -407,10 +407,6 @@
   <div id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    /* =====================================================================
-       MENU — per modificare pizze e prezzi basta cambiare questa lista.
-       tag: 'firma' (firma della casa), 'hot' (piccante), 'free' (senza lattosio)
-       ===================================================================== */
     const MENU = [
       { id: 'classiche', titolo: 'Le Classiche', pizze: [
         ['01', 'Margherita', 'Pomodoro, mozzarella, basilico', 5.00],
@@ -447,7 +443,6 @@
     const euro = n => n.toFixed(2).replace('.', ',');
     const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-    /* ---------- Costruzione menu ---------- */
     (function buildMenu() {
       const main = document.getElementById('menu'), nav = document.getElementById('catNav');
       MENU.forEach(sec => {
@@ -482,7 +477,6 @@
       for (let i = 1; i <= NUM_TAVOLI; i++) {
         tables.insertAdjacentHTML('beforeend', `<label class="table-chip"><input type="radio" name="tavolo" value="Tavolo ${i}"><span><span><small>Tavolo</small><br>${i}</span></span></label>`);
       }
-      /* QR per tavolo: aprendo la pagina con ?tavolo=3 il tavolo è già selezionato */
       const t = new URLSearchParams(location.search).get('tavolo');
       const pre = t && tables.querySelector(`input[value="Tavolo ${parseInt(t, 10)}"]`);
       if (pre) {
@@ -491,7 +485,6 @@
       }
     })();
 
-    /* ---------- Carrello (stessa struttura dati di prima) ---------- */
     let socket = null;
     try { if (typeof io === 'function') socket = io(); } catch (e) { socket = null; }
     let carrelloCorrente = [];
@@ -553,7 +546,6 @@
       else { carrelloCorrente.push({ name: b.dataset.name, price: parseFloat(b.dataset.price), selectedExtras: [] }); aggiornaVistaCarrello(); }
     });
 
-    /* Barra in basso: visibile se c'è qualcosa nel carrello e il box ordine non è a schermo */
     let cartVisibile = false;
     function aggiornaBarra() {
       const bar = document.getElementById('cart-bar');
@@ -585,7 +577,6 @@
       clearTimeout(toastT); toastT = setTimeout(() => t.className = '', 3200);
     }
 
-    /* ---------- Invio ordine (dati per la cucina invariati) ---------- */
     document.getElementById('btnInviaOrdine').addEventListener('click', function () {
       if (carrelloCorrente.length === 0) {
         toast('Il carrello è vuoto! Aggiungi almeno una pizza.', 'err');
@@ -635,7 +626,6 @@
 
     aggiornaVistaCarrello();
 
-    /* ---------- Categoria attiva nella barra ---------- */
     (function () {
       const links = document.querySelectorAll('#catNav a');
       if (!('IntersectionObserver' in window)) return;
@@ -651,17 +641,11 @@
     })();
   </script>
 
-  <!-- =====================================================================
-       FOTO PIZZE
-       Per usare foto vere: crea una cartella "foto" accanto a questo file e
-       salva le immagini col numero della pizza: foto/01.jpg ... foto/22.jpg
-       (vanno bene anche .png e .webp). Dove manca la foto c'è un'illustrazione.
-       ===================================================================== -->
   <script>
   (function () {
     var FOTO_CARTELLA = 'foto/';
     var FOTO_ESTENSIONI = ['jpg', 'png', 'webp'];
-    var FOTO_PERSONALIZZATE = { /* '16': 'https://tuosito.it/alchimia.jpg' */ };
+    var FOTO_PERSONALIZZATE = {};
 
     function rng(seed) {
       var a = seed >>> 0;
@@ -790,7 +774,6 @@
       loadReal(box, card.dataset.num);
     });
 
-    /* Finestra ingrandita */
     var lb = document.createElement('div');
     lb.id = 'pz-lightbox';
     lb.innerHTML = '<div class="lb-card" role="dialog" aria-modal="true"><div class="lb-pic"></div><h3></h3><p></p><div class="lb-price"></div>' +
@@ -819,7 +802,6 @@
       if ((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('pz-photo')) { e.preventDefault(); openLb(e.target); }
     });
 
-    /* Apparizione allo scroll */
     if ('IntersectionObserver' in window && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
       var io3 = new IntersectionObserver(function (es) {
         es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('fx-in'); io3.unobserve(e.target); } });
@@ -831,9 +813,6 @@
   })();
   </script>
 
-  <!-- =====================================================================
-       PIZZA MARGHERITA 3D (Three.js) — si gira trascinando col dito/mouse
-       ===================================================================== -->
   <script>
   (function () {
     var stage = document.getElementById('pizzaStage');
@@ -882,7 +861,6 @@
       var pizza = new T.Group();
       scene.add(pizza);
 
-      /* Cornicione: profilo ruotato (gonfio sul bordo, come la napoletana) */
       var prof = [[0, -.045], [.9, -.045], [1, -.03], [1.055, .01], [1.07, .055], [1.045, .1], [.99, .125], [.925, .118], [.875, .085], [.85, .055], [.82, .046], [0, .046]]
         .map(function (p) { return new T.Vector2(p[0], p[1]); });
       var crustTex = canvasTex(1024, 256, function (g, w, h) {
@@ -890,7 +868,7 @@
         gr.addColorStop(0, '#d9a05a'); gr.addColorStop(.45, '#e9b874'); gr.addColorStop(.7, '#dba062'); gr.addColorStop(1, '#efcf98');
         g.fillStyle = gr; g.fillRect(0, 0, w, h);
         for (var i = 0; i < 900; i++) { g.fillStyle = 'rgba(' + (R() > .5 ? '255,235,200' : '150,90,40') + ',' + (R() * .12) + ')'; g.fillRect(R() * w, R() * h, 2 + R() * 6, 2 + R() * 6); }
-        for (var j = 0; j < 260; j++) { /* macchie "leopardate" del forno a legna */
+        for (var j = 0; j < 260; j++) {
           var x = R() * w, y = h * (.25 + R() * .55), r = 2 + R() * (R() > .85 ? 16 : 7);
           var rg = g.createRadialGradient(x, y, 0, x, y, r);
           rg.addColorStop(0, 'rgba(45,20,8,.9)'); rg.addColorStop(.6, 'rgba(90,45,15,.5)'); rg.addColorStop(1, 'rgba(120,60,20,0)');
@@ -900,7 +878,6 @@
       });
       crustTex.wrapS = T.RepeatWrapping;
       var crustGeo = new T.LatheGeometry(prof, 128);
-      /* piccole irregolarità del bordo per non sembrare perfetto */
       var pos = crustGeo.attributes.position;
       for (var i = 0; i < pos.count; i++) {
         var x = pos.getX(i), z = pos.getZ(i), y = pos.getY(i), a = Math.atan2(z, x), rr = Math.sqrt(x * x + z * z);
@@ -915,7 +892,6 @@
       crust.castShadow = true; crust.receiveShadow = true;
       pizza.add(crust);
 
-      /* Pomodoro con bordo irregolare */
       var sauceTex = canvasTex(512, 512, function (g, w) {
         var c = w / 2; g.beginPath();
         for (var a = 0; a <= 6.3; a += .05) {
@@ -932,20 +908,19 @@
           rg.addColorStop(0, 'rgba(' + col + ',.35)'); rg.addColorStop(1, 'rgba(' + col + ',0)');
           g.fillStyle = rg; g.fillRect(x - r2, y - r2, r2 * 2, r2 * 2);
         }
-        for (var j = 0; j < 140; j++) { g.fillStyle = 'rgba(60,80,25,' + (.5 + R() * .4) + ')'; g.fillRect(R() * w, R() * w, 1.5, 1.5); } /* origano */
+        for (var j = 0; j < 140; j++) { g.fillStyle = 'rgba(60,80,25,' + (.5 + R() * .4) + ')'; g.fillRect(R() * w, R() * w, 1.5, 1.5); }
         g.restore();
       });
       var sauce = new T.Mesh(new T.CircleGeometry(.9, 96), new T.MeshStandardMaterial({ map: sauceTex, transparent: true, roughness: .35, metalness: 0 }));
       sauce.rotation.x = -Math.PI / 2; sauce.position.y = .049; sauce.receiveShadow = true;
       pizza.add(sauce);
 
-      /* Fior di latte fuso */
       var mozzMat = new T.MeshStandardMaterial({ color: 0xfff4e0, roughness: .5, emissive: 0x2a1a08, emissiveIntensity: .15 });
       var mozzSpots = [[0, .02, .17], [.42, .16, .15], [-.4, .3, .16], [.1, -.46, .16], [-.33, -.36, .14], [.52, -.28, .13], [-.6, -.04, .13], [.2, .56, .14], [-.12, .3, .11], [.62, .12, .1], [-.2, .62, .1], [.34, -.06, .1]];
       mozzSpots.forEach(function (m) {
         var geo = new T.SphereGeometry(1, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2);
         var p = geo.attributes.position;
-        for (var i = 0; i < p.count; i++) { /* contorno irregolare */
+        for (var i = 0; i < p.count; i++) {
           var x = p.getX(i), z = p.getZ(i), a = Math.atan2(z, x), k = 1 + Math.sin(a * 3 + m[0] * 9) * .14 + Math.sin(a * 5 + m[1] * 7) * .08;
           p.setX(i, x * k); p.setZ(i, z * k);
         }
@@ -958,7 +933,6 @@
         pizza.add(mesh);
       });
 
-      /* Foglie di basilico */
       var leafShape = new T.Shape();
       leafShape.moveTo(0, 0);
       leafShape.bezierCurveTo(.075, .03, .085, .13, 0, .21);
@@ -979,12 +953,10 @@
         pizza.add(grp);
       });
 
-      /* Ombra a terra */
       var ground = new T.Mesh(new T.PlaneGeometry(6, 6), new T.ShadowMaterial({ opacity: .45 }));
       ground.rotation.x = -Math.PI / 2; ground.position.y = -.25; ground.receiveShadow = true;
       scene.add(ground);
 
-      /* Vapore */
       var steamTex = canvasTex(64, 64, function (g) {
         var rg = g.createRadialGradient(32, 32, 0, 32, 32, 32);
         rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
@@ -997,7 +969,6 @@
         scene.add(sp); steam.push(sp);
       }
 
-      /* Dimensioni */
       function resize() {
         var w = stage.clientWidth, h = stage.clientHeight;
         renderer.setSize(w, h, false);
@@ -1010,7 +981,6 @@
       resize();
       window.addEventListener('resize', resize);
 
-      /* Trascinamento */
       var rotY = -.4, vel = 0, tilt = .12, tiltT = .12, dragging = false, lx = 0, ly = 0;
       stage.addEventListener('pointerdown', function (e) {
         dragging = true; lx = e.clientX; ly = e.clientY; vel = 0;
@@ -1025,7 +995,6 @@
       window.addEventListener('pointerup', function () { dragging = false; });
       window.addEventListener('pointercancel', function () { dragging = false; });
 
-      /* Rendering solo quando visibile */
       var visible = true;
       if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }, { rootMargin: '50px' }).observe(stage);
 
@@ -1058,7 +1027,6 @@
   })();
   </script>
 
-  <!-- Braci luminose sullo sfondo -->
   <script>
   (function () {
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
