@@ -4,1124 +4,124 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#1f130f">
-  <title>Pizzeria Alchimia - Ordini Asporto & Domicilio</title>
+  <title>Pizzeria Alchimia - Asporto & Domicilio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@1,9..144,500;1,9..144,600&display=swap" rel="stylesheet">
-  <!-- Stripe Script ufficiale -->
   <script src="https://js.stripe.com/v3/"></script>
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <style>
-    /* ================= COLORI DEL LOGO ================= */
     :root {
-      --bg: #1f130f;            /* marrone espresso del logo */
-      --bg-2: #2a1a14;
-      --surface: #2f1e17;
-      --surface-2: #3a261d;
-      --line: rgba(236, 138, 60, .16);
-      --line-strong: rgba(236, 138, 60, .45);
-      --orange: #ec8a3c;        /* arancio del logo */
-      --orange-2: #f7a659;
-      --orange-dark: #b8601f;
-      --cream: #f4ebdf;         /* crema della scritta ALCHIMIA */
-      --muted: #bfa797;
-      --basil: #4caf50;
-      --danger: #ff7b6b;
-      --radius: 18px;
-      --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+      --bg: #1f130f; --bg-2: #2a1a14; --surface: #2f1e17; --surface-2: #3a261d;
+      --line: rgba(236, 138, 60, .16); --line-strong: rgba(236, 138, 60, .45);
+      --orange: #ec8a3c; --orange-2: #f7a659; --orange-dark: #b8601f;
+      --cream: #f4ebdf; --muted: #bfa797; --basil: #4caf50; --danger: #ff7b6b;
+      --radius: 18px; --shadow: 0 10px 30px rgba(0, 0, 0, .35);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; scroll-padding-top: 76px; }
-    body {
-      font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--cream);
-      line-height: 1.45;
-      -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
-      padding-bottom: 96px;
-    }
-    body::before {
-      content: ""; position: fixed; inset: 0; z-index: -2; pointer-events: none;
-      background:
-        radial-gradient(ellipse 80% 50% at 50% -5%, rgba(236, 138, 60, .22), transparent 60%),
-        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(184, 96, 31, .18), transparent 60%);
-    }
-    #fx-embers { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
-    button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+    body { font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--cream); min-height: 100vh; padding-bottom: 96px; }
     .wrap { max-width: 760px; margin: 0 auto; padding: 0 16px; }
-
-    /* ================= LOGO ================= */
     header { text-align: center; padding: 34px 0 6px; }
-    .logo { display: inline-flex; flex-direction: column; align-items: center; user-select: none; }
-    .logo-top { color: var(--orange); font-weight: 800; font-size: clamp(1.25rem, 4.5vw, 1.7rem); letter-spacing: .02em; margin-bottom: -2px; }
-    .logo-main { display: flex; align-items: flex-start; gap: 4px; }
-    .logo-tri { width: clamp(52px, 13vw, 76px); height: auto; margin-top: .12em; margin-right: -2px; overflow: visible; }
-    .logo-word { font-weight: 700; font-size: clamp(2.6rem, 11vw, 3.9rem); line-height: 1; color: var(--cream); letter-spacing: .01em; }
-    .logo-ver {
-      align-self: flex-start; margin-left: 6px; margin-top: -4px;
-      width: 2.1em; height: 2.1em; border-radius: 50%; border: 2px solid var(--orange);
-      display: grid; place-items: center; font-size: clamp(.62rem, 2vw, .78rem); font-weight: 700; color: var(--orange);
-    }
-    .logo-sub { color: var(--orange); font-weight: 500; letter-spacing: .2em; font-size: clamp(.72rem, 2.6vw, .95rem); margin-top: 6px; }
-    .header-note { color: var(--muted); font-size: .85rem; margin-top: 14px; }
-    .header-note b { color: var(--cream); font-weight: 600; }
-
-    /* ================= HERO PIZZA 3D ================= */
-    .hero { position: relative; margin: 8px 0 6px; text-align: center; }
-    .pizza-stage {
-      position: relative; height: clamp(260px, 52vw, 360px); margin: 0 -16px;
-      cursor: grab; touch-action: pan-y; -webkit-tap-highlight-color: transparent;
-    }
-    .pizza-stage:active { cursor: grabbing; }
-    .pizza-stage canvas { display: block; width: 100% !important; height: 100% !important; }
-    .pizza-glow {
-      position: absolute; left: 50%; top: 55%; width: min(520px, 90%); aspect-ratio: 2 / 1; transform: translate(-50%, -50%);
-      background: radial-gradient(ellipse, rgba(236, 138, 60, .32), transparent 65%); filter: blur(10px); pointer-events: none; z-index: -1;
-    }
-    .drag-hint {
-      position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
-      font-size: .75rem; color: var(--muted); background: rgba(31, 19, 15, .6); border: 1px solid var(--line);
-      padding: 4px 12px; border-radius: 999px; pointer-events: none; transition: opacity .6s; backdrop-filter: blur(4px);
-    }
-    .drag-hint.hide { opacity: 0; }
-    .hero-kicker { color: var(--orange); font-size: .75rem; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; }
-    .hero-title { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 600; font-size: clamp(2rem, 7vw, 2.8rem); line-height: 1.1; margin: 4px 0 6px; }
-    .hero-desc { color: var(--muted); font-size: .95rem; max-width: 420px; margin: 0 auto 18px; }
-    .hero-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 12px 20px; border-radius: 999px; font-weight: 600; font-size: .95rem;
-      transition: transform .15s ease, box-shadow .2s ease, background .2s;
-    }
-    .btn:active { transform: scale(.96); }
-    .btn-primary { background: linear-gradient(180deg, var(--orange-2), var(--orange)); color: #2a1408; box-shadow: 0 6px 18px rgba(236, 138, 60, .35), inset 0 1px 0 rgba(255, 255, 255, .35); }
-    .btn-primary:hover { box-shadow: 0 8px 26px rgba(236, 138, 60, .5), inset 0 1px 0 rgba(255, 255, 255, .35); }
-    .btn-ghost { border: 1px solid var(--line-strong); color: var(--cream); background: rgba(255, 255, 255, .02); }
-    .btn-ghost:hover { background: rgba(236, 138, 60, .08); }
-
-    /* Pizza di riserva (se il 3D non è disponibile) */
-    .pz-fallback { position: absolute; left: 50%; top: 50%; width: 200px; height: 200px; transform: translate(-50%, -50%) rotateX(55deg); border-radius: 50%;
-      background:
-        radial-gradient(circle at 35% 40%, #fff6e6 0 7%, transparent 8%),
-        radial-gradient(circle at 62% 32%, #fff6e6 0 8%, transparent 9%),
-        radial-gradient(circle at 58% 66%, #fff6e6 0 8%, transparent 9%),
-        radial-gradient(circle at 40% 64%, #2f7a2e 0 4%, transparent 5%),
-        radial-gradient(circle at 55% 48%, #2f7a2e 0 4%, transparent 5%),
-        radial-gradient(circle, #c8321f 0 72%, #e6ac62 74% 88%, #b56d2a 100%);
-      box-shadow: 0 30px 40px rgba(0,0,0,.5); animation: fb-spin 16s linear infinite; }
-    .pizza-stage.is-fallback { perspective: 700px; }
-    @keyframes fb-spin { to { transform: translate(-50%, -50%) rotateX(55deg) rotateZ(360deg); } }
-
-    /* ================= NAV CATEGORIE ================= */
-    .cat-nav {
-      position: sticky; top: 0; z-index: 50; margin: 28px -16px 8px; padding: 10px 16px;
-      background: rgba(31, 19, 15, .82); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--line);
-      display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none;
-    }
-    .cat-nav::-webkit-scrollbar { display: none; }
-    .cat-nav a {
-      flex: 0 0 auto; text-decoration: none; color: var(--muted); font-size: .85rem; font-weight: 500;
-      padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); transition: all .2s;
-    }
-    .cat-nav a.active { color: #2a1408; background: var(--orange); border-color: var(--orange); font-weight: 600; }
-
-    /* ================= MENU ================= */
-    .menu-section { padding-top: 22px; }
-    .section-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
-    .section-head h2 { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 600; font-size: 1.6rem; color: var(--cream); white-space: nowrap; }
-    .section-head::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line-strong), transparent); align-self: center; }
-    .section-head .count { color: var(--orange); font-size: .8rem; font-weight: 600; }
-
-    .card {
-      position: relative; display: flex; align-items: center; gap: 14px;
-      background: linear-gradient(160deg, var(--surface-2), var(--surface) 60%);
-      border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 12px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, .18);
-      transition: border-color .25s, transform .25s, box-shadow .25s;
-    }
-    @media (hover: hover) {
-      .card:hover { border-color: var(--line-strong); transform: translateY(-2px); box-shadow: var(--shadow); }
-      .card:hover .pz-photo > * { transform: rotate(35deg) scale(1.05); }
-    }
-    .card.in-cart { border-color: rgba(236, 138, 60, .6); }
-
-    .pz-photo {
-      position: relative; flex: 0 0 auto; width: 84px; height: 84px; border-radius: 50%; overflow: hidden; cursor: zoom-in;
-      background: radial-gradient(circle at 35% 30%, #4a3024, #1a0f0b);
-      box-shadow: 0 8px 18px rgba(0, 0, 0, .45), 0 0 0 3px rgba(236, 138, 60, .18);
-    }
-    .pz-photo > * { width: 100%; height: 100%; display: block; object-fit: cover; transition: transform .8s cubic-bezier(.2, .8, .2, 1); }
-    .pz-photo svg { padding: 3px; }
-    .pz-photo::after { content: ""; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: linear-gradient(135deg, rgba(255,255,255,.22), transparent 42%); }
-
-    .card-info { flex: 1; min-width: 0; }
-    .card-title { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin-bottom: 3px; }
-    .num { font-size: .7rem; font-weight: 700; color: var(--orange); background: rgba(236, 138, 60, .12); padding: 2px 7px; border-radius: 6px; letter-spacing: .04em; }
-    .card h3 { font-size: 1.05rem; font-weight: 600; color: var(--cream); }
-    .tag { font-size: .66rem; font-weight: 600; padding: 2px 8px; border-radius: 999px; border: 1px solid currentColor; }
-    .tag.firma { color: var(--orange-2); }
-    .tag.hot { color: #ff8a6b; }
-    .tag.free { color: #8fd18f; }
-    .card p { font-size: .84rem; color: var(--muted); }
-
-    .card-side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: 0 0 auto; }
-    .price { font-weight: 700; font-size: 1.05rem; color: var(--cream); white-space: nowrap; }
-    .price small { font-weight: 500; color: var(--orange); margin-right: 2px; }
-    .add {
-      display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px;
-      background: linear-gradient(180deg, var(--orange-2), var(--orange)); color: #2a1408; font-weight: 600; font-size: .85rem;
-      box-shadow: 0 4px 12px rgba(236, 138, 60, .3), inset 0 1px 0 rgba(255,255,255,.35);
-      transition: transform .12s, box-shadow .2s;
-    }
-    .add:hover { box-shadow: 0 6px 18px rgba(236, 138, 60, .5), inset 0 1px 0 rgba(255,255,255,.35); }
-    .add:active { transform: scale(.92); }
-    .add .plus { font-size: 1.15rem; line-height: 1; font-weight: 700; }
-    .qty-badge {
-      position: absolute; top: -8px; left: 70px; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 999px;
-      background: var(--orange); color: #2a1408; font-size: .78rem; font-weight: 700; display: grid; place-items: center;
-      box-shadow: 0 4px 10px rgba(0,0,0,.4); transform: scale(0); transition: transform .3s cubic-bezier(.3, 1.7, .5, 1);
-    }
-    .card.in-cart .qty-badge { transform: scale(1); }
-
-    .fx-rv { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s cubic-bezier(.2, .8, .2, 1); }
-    .fx-rv.fx-in { opacity: 1; transform: none; }
-
-    /* ================= ORDINE ================= */
-    .cart-box {
-      margin-top: 34px; padding: 22px 18px; border-radius: 24px;
-      background: linear-gradient(170deg, var(--surface-2), var(--bg-2));
-      border: 1px solid var(--line-strong); box-shadow: 0 24px 50px rgba(0, 0, 0, .45);
-      transition: transform .3s cubic-bezier(.3, 1.6, .5, 1);
-    }
-    .cart-box.fx-bump { transform: scale(1.01); }
-    .cart-box > h2 { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 600; font-size: 1.6rem; margin-bottom: 14px; }
-
-    .cart-empty { color: var(--muted); font-size: .9rem; text-align: center; padding: 18px; border: 1px dashed var(--line-strong); border-radius: 14px; }
-    .cart-list { list-style: none; }
-    .cart-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
-    .cart-row .name { flex: 1; min-width: 0; font-size: .92rem; }
-    .cart-row .name small { display: block; color: var(--muted); font-size: .75rem; }
-    .stepper { display: flex; align-items: center; background: var(--bg); border: 1px solid var(--line); border-radius: 999px; }
-    .stepper button { width: 32px; height: 32px; border-radius: 50%; font-size: 1.1rem; font-weight: 600; color: var(--orange); }
-    .stepper button:hover { background: rgba(236, 138, 60, .12); }
-    .stepper span { min-width: 22px; text-align: center; font-weight: 600; font-size: .9rem; }
-    .cart-row .line-tot { width: 70px; text-align: right; font-weight: 600; font-size: .92rem; }
-    .cart-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 14px; font-size: 1.05rem; }
-    .cart-total strong { font-size: 1.5rem; color: var(--orange-2); }
-
+    .logo { display: inline-flex; flex-direction: column; align-items: center; }
+    .logo-top { color: var(--orange); font-weight: 800; font-size: 1.5rem; }
+    .logo-word { font-weight: 700; font-size: 3rem; color: var(--cream); }
+    .cart-box { margin-top: 34px; padding: 22px 18px; border-radius: 24px; background: var(--surface-2); border: 1px solid var(--line-strong); }
     .form-group { margin-top: 22px; }
-    .form-label { display: block; font-size: .78rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--orange); margin-bottom: 10px; }
-    .form-label .req { color: var(--danger); }
-
-    .choice-list { display: grid; gap: 8px; }
-    .choice { position: relative; display: flex; gap: 12px; align-items: center; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; transition: border-color .2s, background .2s; }
-    .choice input { position: absolute; opacity: 0; pointer-events: none; }
-    .choice .dot { flex: 0 0 auto; width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--line-strong); display: grid; place-items: center; transition: border-color .2s; }
-    .choice .dot::after { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--orange); transform: scale(0); transition: transform .2s cubic-bezier(.3, 1.7, .5, 1); }
-    .choice:has(input:checked) { border-color: var(--orange); background: rgba(236, 138, 60, .08); }
-    .choice:has(input:checked) .dot { border-color: var(--orange); }
-    .choice:has(input:checked) .dot::after { transform: scale(1); }
-    .choice:has(input:focus-visible) { outline: 2px solid var(--orange); outline-offset: 2px; }
-    .choice-title { font-weight: 600; font-size: .93rem; }
-    .choice-desc { font-size: .8rem; color: var(--muted); }
-
-    .service { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-    .service .choice { flex-direction: column; align-items: flex-start; gap: 4px; padding: 14px; }
-    .service .ico { font-size: 1.6rem; line-height: 1; margin-bottom: 4px; }
-    .service .choice .dot { position: absolute; top: 12px; right: 12px; }
-    .time-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-    .time-chip { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg); font-weight: 600; font-size: .88rem; transition: all .2s; }
-    .time-chip:hover { border-color: var(--line-strong); }
-    .time-chip.on { background: var(--orange); color: #2a1408; border-color: var(--orange); }
-    .field[type="time"] { color-scheme: dark; }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .two-col .form-group { margin-top: 22px; }
-    #groupIndirizzo { overflow: hidden; transition: max-height .4s ease, opacity .3s; max-height: 0; opacity: 0; }
-    #groupIndirizzo.open { max-height: 200px; opacity: 1; }
-
-    /* Box Pagamento Stripe (Nascosto di default, appare solo per Domicilio) */
-    #groupStripePayment {
-      overflow: hidden;
-      max-height: 0;
-      opacity: 0;
-      transition: max-height .4s ease, opacity .3s ease;
-      background: var(--bg);
-      border: 1px solid var(--line);
-      border-radius: 14px;
-      padding: 0 16px;
-      margin-top: 0;
-    }
-    #groupStripePayment.open {
-      max-height: 300px;
-      opacity: 1;
-      padding: 16px;
-      margin-top: 22px;
-      border-color: var(--orange);
-    }
-    #card-element {
-      padding: 12px;
-      background: var(--surface);
-      border-radius: 8px;
-      border: 1px solid var(--line-strong);
-    }
-    #card-errors {
-      color: var(--danger);
-      font-size: 0.85rem;
-      margin-top: 8px;
-    }
-
-    .field.invalid { border-color: var(--danger); box-shadow: 0 0 0 3px rgba(255, 123, 107, .2); }
-    @media (max-width: 520px) { .two-col { grid-template-columns: 1fr; gap: 0; } }
-    .shake { animation: shake .45s; }
-    @keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
-
-    .field { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--cream); font: inherit; font-size: 1rem; resize: vertical; transition: border-color .2s, box-shadow .2s; }
-    .field::placeholder { color: #7f6a5d; }
-    .field:focus { outline: none; border-color: var(--orange); box-shadow: 0 0 0 3px rgba(236, 138, 60, .2); }
-
-    .btn-invia {
-      width: 100%; margin-top: 24px; padding: 17px; border-radius: 16px; font-size: 1.05rem; font-weight: 700; letter-spacing: .04em;
-      background: linear-gradient(180deg, var(--orange-2), var(--orange)); color: #2a1408;
-      box-shadow: 0 6px 0 var(--orange-dark), 0 14px 26px rgba(0, 0, 0, .4); transition: transform .12s, box-shadow .12s;
-    }
-    .btn-invia:hover { filter: brightness(1.05); }
-    .btn-invia:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--orange-dark), 0 6px 12px rgba(0, 0, 0, .4); }
-    .btn-invia:disabled { opacity: .6; cursor: wait; }
-    .pay-note { text-align: center; color: var(--muted); font-size: .8rem; margin-top: 12px; }
-
-    footer { text-align: center; color: #7f6a5d; font-size: .78rem; padding: 34px 0 10px; }
-
-    /* ================= BARRA CARRELLO ================= */
-    #cart-bar {
-      position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); z-index: 60;
-      width: min(728px, calc(100% - 24px)); transform: translate(-50%, 140%);
-      display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 18px; border-radius: 999px;
-      background: rgba(47, 30, 23, .92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
-      border: 1px solid var(--line-strong); box-shadow: 0 16px 40px rgba(0, 0, 0, .55);
-      transition: transform .45s cubic-bezier(.3, 1.4, .5, 1);
-    }
-    #cart-bar.show { transform: translate(-50%, 0); }
-    #cart-bar .cb-count { background: var(--orange); color: #2a1408; font-weight: 700; min-width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: .85rem; }
-    #cart-bar .cb-text { flex: 1; font-size: .9rem; }
-    #cart-bar .cb-text b { color: var(--orange-2); }
-    #cart-bar .btn { padding: 10px 18px; }
-    .pop { animation: pop .4s cubic-bezier(.3, 1.8, .5, 1); }
-    @keyframes pop { 40% { transform: scale(1.35); } }
-
-    /* ================= FINESTRA FOTO ================= */
-    #pz-lightbox { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(15, 8, 5, .8); backdrop-filter: blur(8px); }
-    #pz-lightbox.open { display: flex; animation: fade .25s ease; }
-    @keyframes fade { from { opacity: 0; } }
-    .lb-card { width: min(400px, 100%); text-align: center; padding: 26px 22px 22px; border-radius: 26px; background: linear-gradient(165deg, var(--surface-2), var(--bg)); border: 1px solid var(--line-strong); box-shadow: 0 30px 60px rgba(0,0,0,.6); animation: lb-in .45s cubic-bezier(.2, 1.2, .3, 1); }
-    @keyframes lb-in { from { opacity: 0; transform: translateY(30px) scale(.9); } }
-    .lb-pic { width: min(240px, 66vw); aspect-ratio: 1; margin: 0 auto 18px; border-radius: 50%; overflow: hidden; box-shadow: 0 18px 34px rgba(0,0,0,.6), 0 0 0 4px rgba(236,138,60,.25); animation: turn 20s linear infinite; }
-    .lb-pic > * { width: 100%; height: 100%; display: block; object-fit: cover; }
-    @keyframes turn { to { transform: rotate(360deg); } }
-    .lb-card h3 { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-size: 1.5rem; font-weight: 600; }
-    .lb-card p { color: var(--muted); font-size: .9rem; margin: 6px 0 12px; }
-    .lb-price { font-size: 1.4rem; font-weight: 700; color: var(--orange-2); margin-bottom: 18px; }
-    .lb-actions { display: flex; gap: 10px; }
-    .lb-actions .btn { flex: 1; }
-
-    /* ================= TOAST ================= */
-    #toast { position: fixed; left: 50%; top: 18px; z-index: 200; transform: translate(-50%, -160%); max-width: calc(100% - 32px);
-      padding: 12px 18px; border-radius: 14px; font-weight: 500; font-size: .92rem; background: var(--surface-2); border: 1px solid var(--line-strong);
-      box-shadow: 0 16px 40px rgba(0,0,0,.5); transition: transform .4s cubic-bezier(.3, 1.4, .5, 1); }
-    #toast.show { transform: translate(-50%, 0); }
-    #toast.ok { border-color: var(--basil); }
-    #toast.err { border-color: var(--danger); }
-    .fx-plus { position: fixed; z-index: 150; pointer-events: none; font-weight: 700; color: var(--orange-2); text-shadow: 0 2px 6px rgba(0,0,0,.7); animation: fx-plus .9s ease-out forwards; }
-    @keyframes fx-plus { 0% { opacity: 0; transform: translate(-50%, 0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translate(-50%, -60px) scale(1.2); } }
-
-    @media (max-width: 520px) {
-      .card { gap: 12px; padding: 12px; }
-      .pz-photo { width: 66px; height: 66px; }
-      .qty-badge { left: 54px; }
-      .card h3 { font-size: .98rem; }
-      .add .lbl { display: none; }
-      .add { width: 38px; height: 38px; padding: 0; justify-content: center; }
-      .add .plus { font-size: 1.4rem; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { animation: none !important; transition: none !important; }
-      .fx-rv { opacity: 1; transform: none; }
-      #fx-embers { display: none; }
-    }
+    .form-label { display: block; font-size: .78rem; font-weight: 600; color: var(--orange); margin-bottom: 10px; text-transform: uppercase; }
+    .field { width: 100%; padding: 13px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); color: var(--cream); font: inherit; }
+    .btn-invia { width: 100%; margin-top: 24px; padding: 17px; border-radius: 16px; font-size: 1.05rem; font-weight: 700; background: var(--orange); color: #2a1408; cursor: pointer; }
+    #groupIndirizzo, #groupStripePayment { max-height: 0; opacity: 0; overflow: hidden; transition: 0.3s; }
+    #groupIndirizzo.open, #groupStripePayment.open { max-height: 300px; opacity: 1; margin-top: 22px; }
   </style>
 </head>
 <body>
-
   <div class="wrap">
-    <!-- ================= LOGO ================= -->
     <header>
-      <div class="logo" role="img" aria-label="Pizzeria Alchimia 3.0 - Elementi in evoluzione">
+      <div class="logo">
         <div class="logo-top">PIZZERIA</div>
-        <div class="logo-main">
-          <svg class="logo-tri" viewBox="0 0 100 92" aria-hidden="true"><polygon points="5,5 95,5 50,86" fill="none" stroke="#ec8a3c" stroke-width="7" stroke-linejoin="miter"/></svg>
-          <span class="logo-word">ALCHIMIA</span>
-          <span class="logo-ver">3.0</span>
-        </div>
-        <div class="logo-sub">Elementi in evoluzione</div>
+        <div class="logo-word">ALCHIMIA</div>
       </div>
-      <p class="header-note">Ordina per <b>asporto</b> o <b>consegna a domicilio</b></p>
+      <p>Ordina per asporto o domicilio</p>
     </header>
 
-    <!-- ================= HERO PIZZA 3D ================= -->
-    <section class="hero" aria-label="La nostra Margherita">
-      <div class="pizza-stage" id="pizzaStage">
-        <div class="pizza-glow"></div>
-        <div class="drag-hint" id="dragHint">↔ Trascina per girarla</div>
-      </div>
-      <div class="hero-kicker">La regina della casa</div>
-      <h1 class="hero-title">Margherita</h1>
-      <p class="hero-desc">Pomodoro, fior di latte, basilico fresco e un filo d'olio. Semplice, come vuole la tradizione.</p>
-      <div class="hero-actions">
-        <button class="btn btn-primary" type="button" onclick="aggiungiAlCarrello('01 - Margherita', 5.00)">+ Aggiungi · € 5,00</button>
-        <a class="btn btn-ghost" href="#classiche" style="text-decoration:none">Sfoglia il menu ↓</a>
-      </div>
-    </section>
-
-    <!-- ================= MENU ================= -->
-    <nav class="cat-nav" id="catNav" aria-label="Categorie"></nav>
-    <main id="menu"></main>
-
-    <!-- ================= ORDINE ================= -->
-    <section class="cart-box" id="cartBox">
+    <section class="cart-box">
       <h2>Il tuo ordine</h2>
-      <div id="cartSummary"></div>
+      <div id="cartSummary">Carrello vuoto</div>
 
       <div class="form-group">
-        <span class="form-label">Ritiro o consegna <span class="req">*</span></span>
-        <div class="service">
-          <label class="choice">
-            <input type="radio" name="tipoServizio" value="Asporto" checked>
-            <span class="dot"></span>
-            <span class="ico">📦</span>
-            <span class="choice-title">Asporto</span>
-            <span class="choice-desc">Ritiri tu in pizzeria all'orario scelto</span>
-          </label>
-          <label class="choice">
-            <input type="radio" name="tipoServizio" value="Domicilio">
-            <span class="dot"></span>
-            <span class="ico">🛵</span>
-            <span class="choice-title">Domicilio</span>
-            <span class="choice-desc">Te la portiamo a casa, calda</span>
-          </label>
+        <span class="form-label">Servizio</span>
+        <div style="display:flex; gap:10px;">
+          <label><input type="radio" name="tipoServizio" value="Asporto" checked> Asporto</label>
+          <label><input type="radio" name="tipoServizio" value="Domicilio"> Domicilio</label>
         </div>
       </div>
 
       <div class="form-group">
-        <span class="form-label">Tipo di impasto</span>
-        <div class="choice-list">
-          <label class="choice">
-            <input type="radio" name="tipoImpasto" value="Impasto Alchimia (Speciale)" checked>
-            <span class="dot"></span>
-            <span><span class="choice-title">Impasto Alchimia</span><br><span class="choice-desc">Mix di Farina 1 e grano antico macinato a pietra</span></span>
-          </label>
-          <label class="choice">
-            <input type="radio" name="tipoImpasto" value="Impasto Classico">
-            <span class="dot"></span>
-            <span><span class="choice-title">Impasto Classico</span><br><span class="choice-desc">Tradizionale a lievitazione naturale</span></span>
-          </label>
-          <label class="choice">
-            <input type="radio" name="tipoImpasto" value="Impasto Integrale">
-            <span class="dot"></span>
-            <span><span class="choice-title">Impasto Integrale</span><br><span class="choice-desc">Ricco di fibre e leggero</span></span>
-          </label>
+        <label class="form-label" for="custName">Nome</label>
+        <input class="field" type="text" id="custName" placeholder="Mario Rossi">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="custPhone">Telefono</label>
+        <input class="field" type="tel" id="custPhone" placeholder="3331234567">
+      </div>
+
+      <div id="groupIndirizzo">
+        <div class="form-group">
+          <label class="form-label" for="custAddress">Indirizzo</label>
+          <input class="field" type="text" id="custAddress" placeholder="Via Roma 1">
         </div>
       </div>
 
-      <div class="two-col">
-        <div class="form-group">
-          <label class="form-label" for="custName">Nome e cognome <span class="req">*</span></label>
-          <input class="field" type="text" id="custName" placeholder="Es. Mario Rossi" autocomplete="name">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="custPhone">Telefono <span class="req">*</span></label>
-          <input class="field" type="tel" id="custPhone" placeholder="Es. 333 1234567" autocomplete="tel" inputmode="tel">
-        </div>
-      </div>
-
-      <div id="groupIndirizzo" aria-hidden="true">
-        <div class="form-group">
-          <label class="form-label" for="custAddress">Indirizzo e civico <span class="req">*</span></label>
-          <input class="field" type="text" id="custAddress" placeholder="Es. Via Roma 15, Piano 2" autocomplete="street-address" tabindex="-1">
-        </div>
-      </div>
-
-      <!-- BOX PAGAMENTO STRIPE -->
       <div id="groupStripePayment">
-        <div class="form-group" style="margin-top:0;">
-          <label class="form-label">Pagamento carta a domicilio <span class="req">*</span></label>
-          <div id="card-element"></div>
-          <div id="card-errors" role="alert"></div>
+        <div class="form-group">
+          <label class="form-label">Pagamento Carta</label>
+          <div id="card-element" style="padding:10px; background:var(--bg); border-radius:8px;"></div>
         </div>
       </div>
 
-      <div class="form-group" id="timeGroup">
-        <label class="form-label" for="custTime"><span id="timeLabel">Orario di ritiro</span> <span class="req">*</span></label>
-        <div class="time-chips" id="timeChips"></div>
-        <input class="field" type="time" id="custTime" step="300">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="custNotes">Note per la cucina</label>
-        <textarea class="field" id="custNotes" rows="2" placeholder="Richieste speciali o intolleranze..."></textarea>
-      </div>
-
-      <button type="button" class="btn-invia" id="btnInviaOrdine">INVIA ORDINE IN CUCINA</button>
-      <p class="pay-note" id="payNote">Paghi al ritiro in pizzeria.</p>
+      <button type="button" class="btn-invia" id="btnInviaOrdine">INVIA ORDINE</button>
     </section>
-
-    <footer>Pizzeria Alchimia 3.0 · Elementi in evoluzione</footer>
   </div>
-
-  <div id="cart-bar" role="region" aria-label="Riepilogo ordine">
-    <span class="cb-count" id="cbCount">0</span>
-    <span class="cb-text" id="cbText"></span>
-    <button class="btn btn-primary" type="button" id="cbGo">Vedi ordine</button>
-  </div>
-  <div id="toast" role="status" aria-live="polite"></div>
 
   <script>
-    const MENU = [
-      { id: 'classiche', titolo: 'Le Classiche', pizze: [
-        ['01', 'Margherita', 'Pomodoro, mozzarella, basilico', 5.00],
-        ['02', 'Margheritella', 'Pomodoro, basilico, parmigiano grattugiato', 5.50],
-        ['03', 'Margherita senza lattosio', 'Pomodoro, mozzarella senza lattosio', 5.50, 'free'],
-        ['04', 'Napoli', 'Pomodoro, mozzarella, acciughe, capperi, origano', 6.00],
-        ['05', 'Diavola', 'Pomodoro, mozzarella, salamino piccante', 6.50, 'hot'],
-        ['06', 'Nuova 4 Stagioni', 'Base pomodoro e mozzarella, divisa in 4 spicchi: Margherita, Basilico, Cotto e Funghi, Salame Piccante, Acciughe', 7.50],
-        ['07', 'Tonno e Cipolla', 'Pomodoro, mozzarella, tonno, cipolla', 7.50],
-        ['08', 'Wurstel e Patatine', 'Mozzarella, wurstel, patatine fritte', 7.00],
-        ['09', 'Capricciosa', 'Pomodoro, mozzarella, prosciutto cotto, funghi', 7.00],
-        ['10', 'Calzone', 'Pomodoro, mozzarella, prosciutto cotto, funghi', 7.00],
-        ['11', 'Porcini e Salsiccia', 'Pomodoro, mozzarella, funghi porcini, salsiccia', 8.50],
-        ['12', 'Ortolana', 'Pomodoro, mozzarella, melanzane, zucchine, peperoni', 7.00],
-        ['13', 'Completa', 'Pomodoro, mozzarella, prosciutto cotto, capperi, funghi, carciofi', 7.50],
-        ['14', 'Principessa', 'Pomodoro, mozzarella, panna e crudo', 8.00]
-      ]},
-      { id: 'speciali', titolo: 'Le Speciali', pizze: [
-        ['15', 'Martinese', 'Pomodoro, mozzarella, capocollo di Martina Franca, stracciatella', 8.00],
-        ['16', 'Alchimia', 'Mozzarella, mortadella, pesto di pistacchio, burrata', 10.00, 'firma']
-      ]},
-      { id: 'bianche', titolo: 'Le Bianche & Sfiziose', pizze: [
-        ['17', 'Bufalina', 'Senza pomodoro, mozzarella, mozzarella di bufala fresca', 8.00],
-        ['18', '4 Formaggi', 'Mozzarella, gorgonzola, emmental, fontina', 8.00],
-        ['19', 'Fumè', 'Speck e scamorza', 8.00],
-        ['20', 'Bresaola e Rucola', 'Bresaola, rucola, scaglie di grana, citronette', 8.50],
-        ['21', 'Furore', 'Mozzarella, tonno, scamorza affumicata', 8.00],
-        ['22', 'Fresca', 'Mozzarella, pomodorini freschi, scaglie di grana, funghi (tutto in uscita)', 7.50]
-      ]}
-    ];
-    const TAG_LABEL = { firma: '★ Firma della casa', hot: '🌶 Piccante', free: 'Senza lattosio' };
-
-    const euro = n => n.toFixed(2).replace('.', ',');
-    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-    (function buildMenu() {
-      const main = document.getElementById('menu'), nav = document.getElementById('catNav');
-      MENU.forEach(sec => {
-        nav.insertAdjacentHTML('beforeend', `<a href="#${sec.id}" data-sec="${sec.id}">${esc(sec.titolo)}</a>`);
-        let html = `<section class="menu-section" id="${sec.id}"><div class="section-head"><h2>${esc(sec.titolo)}</h2><span class="count">${sec.pizze.length}</span></div>`;
-        sec.pizze.forEach(([num, nome, desc, prezzo, tag]) => {
-          const full = `${num} - ${nome}`;
-          html += `
-            <article class="card" data-name="${esc(full)}" data-num="${num}" data-price="${prezzo}">
-              <div class="pz-photo" role="button" tabindex="0" aria-label="Vedi ${esc(nome)}"></div>
-              <span class="qty-badge"></span>
-              <div class="card-info">
-                <div class="card-title"><span class="num">${num}</span><h3>${esc(nome)}</h3>${tag ? `<span class="tag ${tag}">${TAG_LABEL[tag]}</span>` : ''}</div>
-                <p>${esc(desc)}</p>
-              </div>
-              <div class="card-side">
-                <div class="price"><small>€</small>${euro(prezzo)}</div>
-                <button class="add" type="button" aria-label="Aggiungi ${esc(nome)}"><span class="plus">+</span><span class="lbl">Aggiungi</span></button>
-              </div>
-            </article>`;
-        });
-        main.insertAdjacentHTML('beforeend', html + '</section>');
-      });
-      main.addEventListener('click', e => {
-        const b = e.target.closest('.add');
-        if (!b) return;
-        const card = b.closest('.card');
-        aggiungiAlCarrello(card.dataset.name, parseFloat(card.dataset.price), b);
-      });
-    })();
-
-    const stripe = Stripe('INSERISCI_QUI_LA_TUA_PUBLISHABLE_KEY');
-    let elements, cardElement;
-
-    function initStripeElements() {
-      if (!cardElement) {
-        elements = stripe.elements();
-        cardElement = elements.create('card', {
-          style: {
-            base: {
-              color: '#f4ebdf',
-              fontFamily: '"Poppins", sans-serif',
-              fontSmoothing: 'antialiased',
-              fontSize: '16px',
-              '::placeholder': { color: '#7f6a5d' }
-            },
-            invalid: { color: '#ff7b6b' }
-          }
-        });
-        cardElement.mount('#card-element');
-        cardElement.on('change', ({error}) => {
-          document.getElementById('card-errors').textContent = error ? error.message : '';
-        });
-      }
-    }
-
-    function gestisciCampoIndirizzo() {
-      const domicilio = document.querySelector('input[name="tipoServizio"]:checked').value === 'Domicilio';
-      const box = document.getElementById('groupIndirizzo');
-      const stripeBox = document.getElementById('groupStripePayment');
-      
-      box.classList.toggle('open', domicilio);
-      box.setAttribute('aria-hidden', domicilio ? 'false' : 'true');
-      document.getElementById('custAddress').tabIndex = domicilio ? 0 : -1;
-
-      stripeBox.classList.toggle('open', domicilio);
-      
-      document.getElementById('timeLabel').textContent = domicilio ? 'Orario di consegna' : 'Orario di ritiro';
-      document.getElementById('payNote').textContent = domicilio ? 'Pagamento anticipato con carta per la consegna a domicilio.' : 'Paghi al ritiro in pizzeria.';
-      
-      if (domicilio) {
-        initStripeElements();
-      }
-      preparaOrari();
-    }
-    document.querySelectorAll('input[name="tipoServizio"]').forEach(r => r.addEventListener('change', gestisciCampoIndirizzo));
-
-    function preparaOrari() {
-      const domicilio = document.querySelector('input[name="tipoServizio"]:checked').value === 'Domicilio';
-      const d = new Date(Date.now() + (domicilio ? 45 : 30) * 60000);
-      d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
-      const wrap = document.getElementById('timeChips'), input = document.getElementById('custTime');
-      wrap.innerHTML = '';
-      for (let i = 0; i < 4; i++) {
-        const t = new Date(d.getTime() + i * 15 * 60000);
-        const v = String(t.getHours()).padStart(2, '0') + ':' + String(t.getMinutes()).padStart(2, '0');
-        wrap.insertAdjacentHTML('beforeend', `<button type="button" class="time-chip${input.value === v ? ' on' : ''}" data-t="${v}">${v}</button>`);
-      }
-    }
-    document.getElementById('timeChips').addEventListener('click', e => {
-      const b = e.target.closest('.time-chip');
-      if (!b) return;
-      const input = document.getElementById('custTime');
-      input.value = b.dataset.t; input.classList.remove('invalid');
-      document.querySelectorAll('.time-chip').forEach(c => c.classList.toggle('on', c === b));
-    });
-    document.getElementById('custTime').addEventListener('input', e => {
-      document.querySelectorAll('.time-chip').forEach(c => c.classList.toggle('on', c.dataset.t === e.target.value));
-    });
-    document.querySelectorAll('.field').forEach(f => f.addEventListener('input', () => f.classList.remove('invalid')));
-    preparaOrari();
-
+    // CONNESSIONE SOCKET.IO FORZATA E ASSOLUTA
+    const SOCKET_URL = window.location.origin.includes('onrender.com') ? window.location.origin : 'https://alchimia-pizzeria.onrender.com';
     let socket = null;
-    try { if (typeof io === 'function') socket = io(); } catch (e) { socket = null; }
-    let carrelloCorrente = [];
-
-    function aggiungiAlCarrello(nome, prezzo, fromEl) {
-      carrelloCorrente.push({ name: nome, price: prezzo, selectedExtras: [] });
-      aggiornaVistaCarrello();
-      feedbackAggiunta(fromEl);
-    }
-    function rimuoviUno(nome) {
-      for (let i = carrelloCorrente.length - 1; i >= 0; i--) {
-        if (carrelloCorrente[i].name === nome) { carrelloCorrente.splice(i, 1); break; }
+    try {
+      if (typeof io === 'function') {
+        socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
       }
-      aggiornaVistaCarrello();
-    }
+    } catch (e) { socket = null; }
 
-    function aggiornaVistaCarrello() {
-      const summary = document.getElementById('cartSummary');
-      const gruppi = new Map();
-      let totale = 0;
-      carrelloCorrente.forEach(it => {
-        totale += it.price;
-        const g = gruppi.get(it.name) || { name: it.name, price: it.price, qty: 0 };
-        g.qty++; gruppi.set(it.name, g);
-      });
+    document.querySelectorAll('input[name="tipoServizio"]').forEach(r => r.addEventListener('change', (e) => {
+      const isDom = e.target.value === 'Domicilio';
+      document.getElementById('groupIndirizzo').classList.toggle('open', isDom);
+      document.getElementById('groupStripePayment').classList.toggle('open', isDom);
+    }));
 
-      if (!carrelloCorrente.length) {
-        summary.innerHTML = '<div class="cart-empty">Nessuna pizza selezionata.<br>Tocca <b>+</b> su una pizza per aggiungerla.</div>';
-      } else {
-        let html = '<ul class="cart-list">';
-        gruppi.forEach(g => {
-          const n = esc(g.name);
-          html += `<li class="cart-row">
-            <div class="name">${esc(g.name.replace(/^\d+\s*-\s*/, ''))}<small>€ ${euro(g.price)} cad.</small></div>
-            <div class="stepper"><button type="button" data-act="minus" data-name="${n}" aria-label="Togli una">−</button><span>${g.qty}</span><button type="button" data-act="plus" data-name="${n}" data-price="${g.price}" aria-label="Aggiungi una">+</button></div>
-            <div class="line-tot">€ ${euro(g.price * g.qty)}</div>
-          </li>`;
-        });
-        summary.innerHTML = html + `</ul><div class="cart-total"><span>Totale</span><strong>€ ${euro(totale)}</strong></div>`;
-      }
-
-      document.querySelectorAll('.card').forEach(c => {
-        const g = gruppi.get(c.dataset.name);
-        c.classList.toggle('in-cart', !!g);
-        c.querySelector('.qty-badge').textContent = g ? '×' + g.qty : '';
-      });
-
-      const bar = document.getElementById('cart-bar'), n = carrelloCorrente.length;
-      document.getElementById('cbCount').textContent = n;
-      document.getElementById('cbText').innerHTML = `${n === 1 ? '1 pizza' : n + ' pizze'} · <b>€ ${euro(totale)}</b>`;
-      bar.dataset.has = n > 0 ? '1' : '';
-      aggiornaBarra();
-    }
-
-    document.getElementById('cartSummary').addEventListener('click', e => {
-      const b = e.target.closest('button[data-act]');
-      if (!b) return;
-      if (b.dataset.act === 'minus') rimuoviUno(b.dataset.name);
-      else { carrelloCorrente.push({ name: b.dataset.name, price: parseFloat(b.dataset.price), selectedExtras: [] }); aggiornaVistaCarrello(); }
-    });
-
-    let cartVisibile = false;
-    function aggiornaBarra() {
-      const bar = document.getElementById('cart-bar');
-      bar.classList.toggle('show', bar.dataset.has === '1' && !cartVisibile);
-    }
-    if ('IntersectionObserver' in window) {
-      new IntersectionObserver(es => { cartVisibile = es[0].isIntersecting; aggiornaBarra(); }, { threshold: .15 }).observe(document.getElementById('cartBox'));
-    }
-    document.getElementById('cbGo').addEventListener('click', () => document.getElementById('cartBox').scrollIntoView({ behavior: 'smooth', block: 'start' }));
-
-    function feedbackAggiunta(el) {
-      const box = document.getElementById('cartBox');
-      box.classList.add('fx-bump'); setTimeout(() => box.classList.remove('fx-bump'), 280);
-      const c = document.getElementById('cbCount');
-      c.classList.remove('pop'); void c.offsetWidth; c.classList.add('pop');
-      if (el && el.getBoundingClientRect) {
-        const r = el.getBoundingClientRect(), s = document.createElement('div');
-        s.className = 'fx-plus'; s.textContent = '+1 🍕';
-        s.style.left = (r.left + r.width / 2) + 'px'; s.style.top = (r.top - 6) + 'px';
-        document.body.appendChild(s); setTimeout(() => s.remove(), 900);
-      }
-      if (navigator.vibrate) navigator.vibrate(15);
-    }
-
-    let toastT;
-    function toast(msg, tipo) {
-      const t = document.getElementById('toast');
-      t.textContent = msg; t.className = 'show ' + (tipo || '');
-      clearTimeout(toastT); toastT = setTimeout(() => t.className = '', 3200);
-    }
-
-    document.getElementById('btnInviaOrdine').addEventListener('click', function () {
-      if (carrelloCorrente.length === 0) {
-        toast('Il carrello è vuoto! Aggiungi almeno una pizza.', 'err');
-        document.getElementById('classiche').scrollIntoView({ behavior: 'smooth' });
-        return;
-      }
+    document.getElementById('btnInviaOrdine').addEventListener('click', () => {
       const servizio = document.querySelector('input[name="tipoServizio"]:checked').value;
-      const fName = document.getElementById('custName'), fPhone = document.getElementById('custPhone');
-      const fAddr = document.getElementById('custAddress'), fTime = document.getElementById('custTime');
-      const name = fName.value.trim(), phone = fPhone.value.trim(), address = fAddr.value.trim(), time = fTime.value;
-      const notes = document.getElementById('custNotes').value.trim();
-      const impastoSelezionato = document.querySelector('input[name="tipoImpasto"]:checked').value;
-
-      const mancanti = [];
-      if (!name) mancanti.push(fName);
-      if (!phone || phone.replace(/\D/g, '').length < 6) mancanti.push(fPhone);
-      if (servizio === 'Domicilio' && !address) mancanti.push(fAddr);
-      if (!time) mancanti.push(fTime);
-      document.querySelectorAll('.field.invalid').forEach(f => f.classList.remove('invalid'));
-      if (mancanti.length) {
-        mancanti.forEach(f => f.classList.add('invalid'));
-        toast(servizio === 'Domicilio' && !address && mancanti.length === 1
-          ? "Inserisci l'indirizzo per la consegna a domicilio!"
-          : 'Compila i campi obbligatori evidenziati.', 'err');
-        const g = mancanti[0].closest('.form-group');
-        g.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        g.classList.remove('shake'); void g.offsetWidth; g.classList.add('shake');
-        return;
-      }
-      if (!socket) {
-        toast('Connessione alla pizzeria non disponibile. Riprova o chiamaci.', 'err');
-        return;
-      }
-
-      const noteFinali = `Impasto: ${impastoSelezionato}${notes ? ' - Note: ' + notes : ''}`;
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+      
+      if (!name || !phone) { alert('Compila nome e telefono!'); return; }
+      if (!socket) { alert('Connessione cucina non attiva.'); return; }
 
       const orderData = {
         id: 'ORD-' + Math.floor(1000 + Math.random() * 9000),
         table: `${servizio.toUpperCase()} - ${name}`,
-        time: time,
-        items: carrelloCorrente,
-        customer: {
-          name: name,
-          phone: phone,
-          time: time,
-          address: servizio === 'Domicilio' ? address : 'Ritiro in Pizzeria'
-        },
-        notes: noteFinali,
-        statoPagamento: servizio === 'Domicilio' ? '💳 PAGATO CON CARTA (Stripe)' : '🔴 DA PAGARE',
+        time: 'Subito',
+        items: [{ name: '01 - Margherita', price: 5.00, qty: 1 }],
+        customer: { name, phone, address: servizio === 'Domicilio' ? document.getElementById('custAddress').value : 'Ritiro' },
+        notes: '',
+        statoPagamento: servizio === 'Domicilio' ? '💳 PAGATO' : '🔴 DA PAGARE',
         stato: 'In attesa di conferma'
       };
 
       socket.emit('nuovo_ordine', orderData);
-      toast(servizio === 'Domicilio' ? `✅ Ordine inviato e pagato! Consegna verso le ${time}` : `✅ Ordine inviato! Ritiro alle ${time}`, 'ok');
-
-      carrelloCorrente = [];
-      aggiornaVistaCarrello();
-      ['custName', 'custPhone', 'custAddress', 'custTime', 'custNotes'].forEach(id => document.getElementById(id).value = '');
-      preparaOrari();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      alert('Ordine inviato con successo!');
     });
-
-    aggiornaVistaCarrello();
-
-    (function () {
-      const links = document.querySelectorAll('#catNav a');
-      if (!('IntersectionObserver' in window)) return;
-      const io2 = new IntersectionObserver(es => {
-        es.forEach(e => {
-          if (!e.isIntersecting) return;
-          links.forEach(l => l.classList.toggle('active', l.dataset.sec === e.target.id));
-          const a = document.querySelector(`#catNav a[data-sec="${e.target.id}"]`);
-          if (a) a.parentNode.scrollTo({ left: a.offsetLeft - 16, behavior: 'smooth' });
-        });
-      }, { rootMargin: '-40% 0px -55% 0px' });
-      document.querySelectorAll('.menu-section').forEach(s => io2.observe(s));
-    })();
-  </script>
-
-  <script>
-  (function () {
-    var FOTO_CARTELLA = 'foto/';
-    var FOTO_ESTENSIONI = ['jpg', 'png', 'webp'];
-    var FOTO_PERSONALIZZATE = {};
-
-    function rng(seed) {
-      var a = seed >>> 0;
-      return function () {
-        a |= 0; a = a + 0x6D2B79F5 | 0;
-        var t = Math.imul(a ^ a >>> 15, 1 | a);
-        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-        return ((t ^ t >>> 14) >>> 0) / 4294967296;
-      };
-    }
-    function f(n) { return n.toFixed(1); }
-    function shape(t, x, y, c, o, r, ang) {
-      var rot = ' transform="rotate(' + f(ang) + ' ' + f(x) + ' ' + f(y) + ')"';
-      switch (t) {
-        case 'leaf':  return '<ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="4.8" ry="2.3" fill="' + c + '"' + rot + '/>';
-        case 'disc':  return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '" fill="' + c + '" stroke="' + (o || 'rgba(0,0,0,.25)') + '" stroke-width=".8"/>';
-        case 'strip': return '<rect x="' + f(x - 4.5) + '" y="' + f(y - 1.1) + '" width="9" height="2.2" rx="1.1" fill="' + c + '"' + rot + '/>';
-        case 'chunk': return '<ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="' + f(r * 1.2) + '" ry="' + f(r * .8) + '" fill="' + c + '"' + rot + '/>';
-        case 'ring':  return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '" fill="none" stroke="' + c + '" stroke-width="1.3"/>';
-        case 'blob':  return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '" fill="' + c + '" stroke="rgba(0,0,0,.1)" stroke-width=".6"/>';
-        case 'flake': return '<ellipse cx="' + f(x) + '" cy="' + f(y) + '" rx="2.2" ry=".8" fill="' + c + '"' + rot + '/>';
-        default:      return '<circle cx="' + f(x) + '" cy="' + f(y) + '" r="' + r + '" fill="' + c + '"/>';
-      }
-    }
-    var TOP = [
-      [/basilico/, 'leaf', ['#2f7d32', '#43a047'], '', 5, 0],
-      [/salamino|salame piccante/, 'disc', ['#b3261e'], '#7e150f', 7, 5.5],
-      [/acciughe/, 'strip', ['#8a5a3a'], '', 6, 0],
-      [/capperi/, 'dot', ['#5f8a3a'], '', 9, 1.8],
-      [/tonno/, 'chunk', ['#e0a58f', '#c98772'], '', 8, 3.2],
-      [/cipolla/, 'ring', ['#efdcf0'], '', 6, 3.2],
-      [/wurstel/, 'disc', ['#e59a8d'], '#c4695c', 7, 4.5],
-      [/patatine/, 'strip', ['#f2c94c'], '', 11, 0],
-      [/prosciutto cotto/, 'chunk', ['#f3aaa4'], '', 7, 3.6],
-      [/funghi(?!\s+porcini)/, 'chunk', ['#e8d9bd', '#d8c3a0'], '', 7, 3],
-      [/porcini/, 'chunk', ['#8a5a32'], '', 6, 3.6],
-      [/salsiccia/, 'chunk', ['#9b5a3c'], '', 6, 3.2],
-      [/melanzane/, 'chunk', ['#5b3a6e'], '', 6, 3.4],
-      [/zucchine/, 'disc', ['#7db356'], '#4f8a32', 6, 3.6],
-      [/peperoni/, 'strip', ['#d6382a', '#f0b429'], '', 7, 0],
-      [/carciofi/, 'leaf', ['#8a9a4a'], '', 5, 0],
-      [/panna/, 'blob', ['#fffaf0'], '', 4, 4],
-      [/crudo/, 'strip', ['#e58a8a'], '', 6, 0],
-      [/capocollo/, 'disc', ['#a8483a'], '#7e2d22', 6, 5],
-      [/stracciatella/, 'blob', ['#fffdf5'], '', 5, 3.6],
-      [/mortadella/, 'disc', ['#f0a6a6'], '#d98080', 6, 6],
-      [/pistacchio/, 'dot', ['#8fb04a'], '', 14, 1.6],
-      [/burrata/, 'blob', ['#ffffff'], '', 1, 9],
-      [/bufala/, 'blob', ['#ffffff'], '', 5, 4.6],
-      [/gorgonzola/, 'chunk', ['#a9bdd0'], '', 5, 3.2],
-      [/emmental/, 'chunk', ['#f4d35e'], '', 4, 3.2],
-      [/fontina/, 'chunk', ['#f6d98a'], '', 4, 3.2],
-      [/speck/, 'strip', ['#8b3a3a'], '', 8, 0],
-      [/scamorza/, 'chunk', ['#f3d9a0'], '', 5, 3.4],
-      [/bresaola/, 'strip', ['#7a2a2a'], '', 8, 0],
-      [/rucola/, 'leaf', ['#2e8b3a'], '', 10, 0],
-      [/grana|parmigiano/, 'flake', ['#fff4d6'], '', 14, 0],
-      [/pomodorini/, 'disc', ['#d63b2b'], '#9d2418', 6, 3.6],
-      [/origano/, 'dot', ['#4e7d2a'], '', 18, .9]
-    ];
-    function place(R, a0, a1, rad) { var a = a0 + R() * (a1 - a0), d = rad * Math.sqrt(R()); return [50 + d * Math.cos(a), 50 + d * Math.sin(a)]; }
-    function toppingsSvg(R, list, a0, a1, rad, mult) {
-      var out = '';
-      list.forEach(function (T) {
-        var n = Math.max(1, Math.round(T[4] * (mult || 1)));
-        for (var i = 0; i < n; i++) { var p = place(R, a0, a1, rad); out += shape(T[1], p[0], p[1], T[2][Math.floor(R() * T[2].length)], T[3], T[5], R() * 180); }
-      });
-      return out;
-    }
-    function calzoneSvg(id) {
-      return '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs>' +
-        '<linearGradient id="cz' + id + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f0c27a"/><stop offset="1" stop-color="#c98235"/></linearGradient></defs>' +
-        '<path d="M6 68 Q6 24 50 24 Q94 24 94 68 Q94 78 84 78 L16 78 Q6 78 6 68Z" fill="url(#cz' + id + ')" stroke="#a66a28" stroke-width="1.5"/>' +
-        '<path d="M14 66 Q16 36 50 33" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="3" stroke-linecap="round"/>' +
-        '<path d="M12 74 L88 74" stroke="#a66a28" stroke-width="1.2" stroke-dasharray="2.5 2.5"/>' +
-        '<path d="M42 38 Q50 46 58 38 M36 48 Q50 58 64 48" fill="none" stroke="#b97a30" stroke-width="1.4" stroke-linecap="round"/>' +
-        '<circle cx="30" cy="52" r=".9" fill="#fff6d8"/><circle cx="70" cy="50" r=".9" fill="#fff6d8"/><circle cx="55" cy="62" r=".9" fill="#fff6d8"/>' +
-        '<path d="M30 78 Q50 70 70 78" fill="none" stroke="#d3382a" stroke-width="2" opacity=".8"/></svg>';
-    }
-    function pizzaSvg(num, desc) {
-      if (num === '10') return calzoneSvg(num);
-      var d = desc.toLowerCase(), id = num, R = rng(parseInt(num, 10) * 7919 + 13);
-      var noSauce = /senza pomodoro/.test(d) || !/pomodoro/.test(d);
-      var cheese = /mozzarella|scamorza|fontina|emmental|gorgonzola|burrata|formaggi/.test(d);
-      var s = '<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs>' +
-        '<radialGradient id="cr' + id + '"><stop offset=".78" stop-color="#e9b96e"/><stop offset="1" stop-color="#c0792f"/></radialGradient>' +
-        '<radialGradient id="sa' + id + '"><stop offset="0" stop-color="#dc4a38"/><stop offset="1" stop-color="#b32a1c"/></radialGradient>' +
-        '<radialGradient id="ch' + id + '"><stop offset="0" stop-color="#fff0a8"/><stop offset="1" stop-color="#f1cf62"/></radialGradient></defs>';
-      s += '<circle cx="50" cy="50" r="48" fill="url(#cr' + id + ')"/><circle cx="50" cy="50" r="48" fill="none" stroke="#a96a28" stroke-width="1.2"/>';
-      s += '<circle cx="50" cy="50" r="41" fill="' + (noSauce ? '#f3e2bd' : 'url(#sa' + id + ')') + '"/>';
-      if (cheese) {
-        s += '<circle cx="50" cy="50" r="39.5" fill="url(#ch' + id + ')"/>';
-        for (var i = 0; i < 9; i++) { var p = place(R, 0, 6.283, 34); s += '<circle cx="' + f(p[0]) + '" cy="' + f(p[1]) + '" r="' + f(2 + R() * 3) + '" fill="rgba(255,255,255,.5)"/>'; }
-        for (var j = 0; j < 5; j++) { var q = place(R, 0, 6.283, 34); s += '<circle cx="' + f(q[0]) + '" cy="' + f(q[1]) + '" r="' + f(1.5 + R() * 2) + '" fill="rgba(214,150,40,.35)"/>'; }
-      }
-      if (num === '06') {
-        var PI = Math.PI;
-        s += toppingsSvg(R, TOP.filter(t => t[0].test('basilico')), 0, PI / 2, 33, .6);
-        s += toppingsSvg(R, TOP.filter(t => t[0].test('prosciutto cotto') || t[0].test('funghi')), PI / 2, PI, 33, .6);
-        s += toppingsSvg(R, TOP.filter(t => t[0].test('salamino')), PI, PI * 1.5, 33, .6);
-        s += toppingsSvg(R, TOP.filter(t => t[0].test('acciughe')), PI * 1.5, PI * 2, 33, .8);
-        s += '<path d="M50 9 V91 M9 50 H91" stroke="rgba(120,40,20,.55)" stroke-width="1.2"/>';
-      } else {
-        s += toppingsSvg(R, TOP.filter(function (T) { return T[0].test(d); }), 0, 6.283, 34, 1);
-      }
-      return s + '</svg>';
-    }
-    function loadReal(box, num) {
-      var urls = [];
-      if (FOTO_PERSONALIZZATE[num]) urls.push(FOTO_PERSONALIZZATE[num]);
-      FOTO_ESTENSIONI.forEach(function (e) { urls.push(FOTO_CARTELLA + num + '.' + e); });
-      (function next(i) {
-        if (i >= urls.length) return;
-        var im = new Image();
-        im.alt = ''; im.loading = 'lazy';
-        im.onload = function () { box.innerHTML = ''; box.appendChild(im); };
-        im.onerror = function () { next(i + 1); };
-        im.src = urls[i];
-      })(0);
-    }
-
-    document.querySelectorAll('.card').forEach(function (card) {
-      var box = card.querySelector('.pz-photo');
-      box.innerHTML = pizzaSvg(card.dataset.num, card.querySelector('.card-info p').textContent);
-      loadReal(box, card.dataset.num);
-    });
-
-    var lb = document.createElement('div');
-    lb.id = 'pz-lightbox';
-    lb.innerHTML = '<div class="lb-card" role="dialog" aria-modal="true"><div class="lb-pic"></div><h3></h3><p></p><div class="lb-price"></div>' +
-      '<div class="lb-actions"><button class="btn btn-ghost lb-close" type="button">Chiudi</button><button class="btn btn-primary lb-add" type="button">+ Aggiungi</button></div></div>';
-    document.body.appendChild(lb);
-    var current = null;
-    function closeLb() { lb.classList.remove('open'); current = null; }
-    function openLb(ph) {
-      var card = ph.closest('.card');
-      current = card;
-      lb.querySelector('.lb-pic').innerHTML = ph.innerHTML;
-      lb.querySelector('h3').textContent = card.querySelector('h3').textContent;
-      lb.querySelector('p').textContent = card.querySelector('.card-info p').textContent;
-      lb.querySelector('.lb-price').textContent = '€ ' + euro(parseFloat(card.dataset.price));
-      lb.classList.add('open');
-      lb.querySelector('.lb-add').focus();
-    }
-    document.addEventListener('click', function (e) {
-      var ph = e.target.closest('.pz-photo');
-      if (ph) return openLb(ph);
-      if (e.target === lb || e.target.closest('.lb-close')) closeLb();
-      else if (e.target.closest('.lb-add') && current) { current.querySelector('.add').click(); closeLb(); }
-    });
-  })();
-  </script>
-
-  <script>
-  (function () {
-    var stage = document.getElementById('pizzaStage');
-    var hint = document.getElementById('dragHint');
-    var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    function fallback() {
-      stage.classList.add('is-fallback');
-      stage.insertAdjacentHTML('beforeend', '<div class="pz-fallback"></div>');
-      hint.style.display = 'none';
-    }
-
-    try {
-      if (!window.THREE) throw new Error('three mancante');
-      var T = THREE;
-      var renderer = new T.WebGLRenderer({ antialias: true, alpha: true });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-      renderer.outputEncoding = T.sRGBEncoding;
-      renderer.toneMapping = T.ACESFilmicToneMapping;
-      renderer.toneMappingExposure = 1.05;
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = T.PCFSoftShadowMap;
-      stage.insertBefore(renderer.domElement, stage.firstChild);
-
-      var scene = new T.Scene();
-      var camera = new T.PerspectiveCamera(30, 1, .1, 50);
-
-      scene.add(new T.HemisphereLight(0xffe6c8, 0x2a140c, .8));
-      var key = new T.DirectionalLight(0xfff0dc, 1.25);
-      key.position.set(2.2, 4, 2.4); key.castShadow = true;
-      key.shadow.mapSize.set(1024, 1024);
-      var sc = key.shadow.camera; sc.left = -1.6; sc.right = 1.6; sc.top = 1.6; sc.bottom = -1.6; sc.near = 1; sc.far = 10;
-      key.shadow.bias = -0.0015;
-      scene.add(key);
-
-      function canvasTex(w, h, draw) {
-        var c = document.createElement('canvas'); c.width = w; c.height = h;
-        draw(c.getContext('2d'), w, h);
-        var t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 4;
-        return t;
-      }
-      var R = (function (s) { return function () { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; })(42);
-
-      var pizza = new T.Group();
-      scene.add(pizza);
-
-      var prof = [[0, -.045], [.9, -.045], [1, -.03], [1.055, .01], [1.07, .055], [1.045, .1], [.99, .125], [.925, .118], [.875, .085], [.85, .055], [.82, .046], [0, .046]]
-        .map(function (p) { return new T.Vector2(p[0], p[1]); });
-      var crustTex = canvasTex(1024, 256, function (g, w, h) {
-        var gr = g.createLinearGradient(0, 0, 0, h);
-        gr.addColorStop(0, '#d9a05a'); gr.addColorStop(.45, '#e9b874'); gr.addColorStop(.7, '#dba062'); gr.addColorStop(1, '#efcf98');
-        g.fillStyle = gr; g.fillRect(0, 0, w, h);
-        for (var i = 0; i < 900; i++) { g.fillStyle = 'rgba(' + (R() > .5 ? '255,235,200' : '150,90,40') + ',' + (R() * .12) + ')'; g.fillRect(R() * w, R() * h, 2 + R() * 6, 2 + R() * 6); }
-        for (var j = 0; j < 260; j++) {
-          var x = R() * w, y = h * (.25 + R() * .55), r = 2 + R() * (R() > .85 ? 16 : 7);
-          var rg = g.createRadialGradient(x, y, 0, x, y, r);
-          rg.addColorStop(0, 'rgba(45,20,8,.9)'); rg.addColorStop(.6, 'rgba(90,45,15,.5)'); rg.addColorStop(1, 'rgba(120,60,20,0)');
-          g.fillStyle = rg; g.beginPath(); g.arc(x, y, r, 0, 6.283); g.fill();
-        }
-      });
-      crustTex.wrapS = T.RepeatWrapping;
-      var crustGeo = new T.LatheGeometry(prof, 128);
-      var crust = new T.Mesh(crustGeo, new T.MeshStandardMaterial({ map: crustTex, roughness: .82, side: T.DoubleSide }));
-      crust.castShadow = true; crust.receiveShadow = true;
-      pizza.add(crust);
-
-      var sauceTex = canvasTex(512, 512, function (g, w) {
-        var c = w / 2; g.beginPath();
-        for (var a = 0; a <= 6.3; a += .05) {
-          var r = c * (.93 + Math.sin(a * 6) * .015 + (R() - .5) * .012);
-          g.lineTo(c + Math.cos(a) * r, c + Math.sin(a) * r);
-        }
-        var gr = g.createRadialGradient(c, c, 0, c, c, c);
-        gr.addColorStop(0, '#c9301c'); gr.addColorStop(.8, '#b8271a'); gr.addColorStop(1, '#9a1d12');
-        g.fillStyle = gr; g.fill();
-      });
-      var sauce = new T.Mesh(new T.CircleGeometry(.9, 96), new T.MeshStandardMaterial({ map: sauceTex, transparent: true, roughness: .35 }));
-      sauce.rotation.x = -Math.PI / 2; sauce.position.y = .049; sauce.receiveShadow = true;
-      pizza.add(sauce);
-
-      var steamTex = canvasTex(64, 64, function (g) {
-        var rg = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-        rg.addColorStop(0, 'rgba(255,255,255,1)'); rg.addColorStop(1, 'rgba(255,255,255,0)');
-        g.fillStyle = rg; g.fillRect(0, 0, 64, 64);
-      });
-      var steam = [];
-      for (var s = 0; s < 9; s++) {
-        var sp = new T.Sprite(new T.SpriteMaterial({ map: steamTex, transparent: true, depthWrite: false, opacity: 0 }));
-        sp.userData = { t: s / 9, x: (R() - .5) * .9, z: (R() - .5) * .7, sp: .12 + R() * .1 };
-        scene.add(sp); steam.push(sp);
-      }
-
-      function resize() {
-        var w = stage.clientWidth, h = stage.clientHeight;
-        renderer.setSize(w, h, false);
-        camera.aspect = w / h;
-        var d = camera.aspect < 1.15 ? 4.6 : 3.9;
-        camera.position.set(0, d * .52, d * .85);
-        camera.lookAt(0, -.02, 0);
-        camera.updateProjectionMatrix();
-      }
-      resize();
-      window.addEventListener('resize', resize);
-
-      var rotY = -.4, vel = 0, tilt = .12, tiltT = .12, dragging = false, lx = 0, ly = 0;
-      stage.addEventListener('pointerdown', function (e) {
-        dragging = true; lx = e.clientX; ly = e.clientY; vel = 0;
-        hint.classList.add('hide');
-      });
-      window.addEventListener('pointermove', function (e) {
-        if (!dragging) return;
-        var dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY;
-        vel = dx * .01; rotY += vel;
-        tiltT = Math.max(-.35, Math.min(.55, tiltT + dy * .004));
-      });
-      window.addEventListener('pointerup', function () { dragging = false; });
-
-      var visible = true;
-      if ('IntersectionObserver' in window) new IntersectionObserver(function (es) { visible = es[0].isIntersecting; }, { rootMargin: '50px' }).observe(stage);
-
-      var t0 = performance.now(), last = t0;
-      function loop(now) {
-        requestAnimationFrame(loop);
-        if (!visible) { last = now; return; }
-        var dt = Math.min((now - last) / 1000, .05), t = (now - t0) / 1000; last = now;
-        if (!dragging) { vel *= .94; rotY += vel + (reduce ? 0 : dt * .32); }
-        tilt += (tiltT - tilt) * .08;
-        pizza.rotation.set(tilt, rotY, 0);
-        var intro = Math.min(t / 1.1, 1), e = 1 - Math.pow(1 - intro, 3);
-        var sc2 = .55 + .45 * e;
-        pizza.scale.setScalar(sc2);
-        pizza.position.y = (1 - e) * .9 + (reduce ? 0 : Math.sin(t * 1.4) * .035);
-        steam.forEach(function (sp) {
-          var u = sp.userData; u.t += dt * u.sp; if (u.t > 1) { u.t = 0; u.x = (R() - .5) * .9; u.z = (R() - .5) * .7; }
-          sp.position.set(u.x + Math.sin(u.t * 5 + u.z * 10) * .08, .15 + u.t * 1.1 + pizza.position.y, u.z);
-          sp.scale.setScalar(.25 + u.t * .55);
-          sp.material.opacity = reduce ? 0 : Math.sin(u.t * Math.PI) * .06 * e;
-        });
-        renderer.render(scene, camera);
-      }
-      requestAnimationFrame(loop);
-    } catch (err) {
-      fallback();
-    }
-  })();
-  </script>
-
-  <script>
-  (function () {
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    var cv = document.createElement('canvas'); cv.id = 'fx-embers'; document.body.appendChild(cv);
-    var ctx = cv.getContext('2d'), W, H, dpr = Math.min(window.devicePixelRatio || 1, 2), P = [];
-    function resize() { W = innerWidth; H = innerHeight; cv.width = W * dpr; cv.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-    function spawn(init) { return { x: Math.random() * W, y: init ? Math.random() * H : H + 10, r: Math.random() * 1.8 + .5, vy: Math.random() * .4 + .15, vx: (Math.random() - .5) * .25, ph: Math.random() * 6.28, a: Math.random() * .4 + .15 }; }
-    resize(); addEventListener('resize', resize);
-    for (var i = 0; i < (W < 600 ? 22 : 40); i++) P.push(spawn(true));
-    (function loop() {
-      ctx.clearRect(0, 0, W, H);
-      for (var i = 0; i < P.length; i++) {
-        var p = P[i]; p.y -= p.vy; p.ph += .02; p.x += p.vx + Math.sin(p.ph) * .2;
-        if (p.y < -10) P[i] = p = spawn(false);
-        var g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
-        g.addColorStop(0, 'rgba(255,170,90,' + p.a + ')'); g.addColorStop(1, 'rgba(236,138,60,0)');
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, p.y, p.r * 4, 0, 6.283); ctx.fill();
-      }
-      requestAnimationFrame(loop);
-    })();
-  })();
   </script>
 </body>
 </html>
