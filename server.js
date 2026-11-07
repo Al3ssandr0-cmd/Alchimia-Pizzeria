@@ -6,8 +6,13 @@ const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
+
+// Inizializzazione Socket.io con CORS totalmente aperto
 const io = new Server(server, {
-  cors: { origin: "*" }
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
 });
 
 app.use(express.json());
@@ -15,7 +20,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const ORDINI_FILE = path.join(__dirname, 'ordini.json');
 
-// Funzione per leggere gli ordini salvati
 function leggiOrdini() {
   try {
     if (fs.existsSync(ORDINI_FILE)) {
@@ -28,7 +32,6 @@ function leggiOrdini() {
   return [];
 }
 
-// Funzione per salvare gli ordini
 function salvaOrdini(ordini) {
   try {
     fs.writeFileSync(ORDINI_FILE, JSON.stringify(ordini, null, 2), 'utf8');
@@ -38,24 +41,24 @@ function salvaOrdini(ordini) {
 }
 
 io.on('connection', (socket) => {
-  console.log('Un client si è connesso:', socket.id);
+  console.log('⚡ Un client si è connesso! ID:', socket.id);
 
-  // Invia gli ordini esistenti appena un client si connette (es. la cucina)
+  // Invia subito la lista ordini alla connessione
   socket.emit('lista_ordini', leggiOrdini());
 
-  // Ricezione di un nuovo ordine da menu.html o asporto.html
+  // Ricezione ordine da Menu o Asporto
   socket.on('nuovo_ordine', (orderData) => {
-    console.log('Nuovo ordine ricevuto:', orderData.id);
+    console.log('📩 Nuovo ordine ricevuto:', orderData.id);
     
     const ordini = leggiOrdini();
     ordini.push(orderData);
     salvaOrdini(ordini);
 
-    // Inoltra l'ordine in tempo reale a tutti i client collegati (Cucina)
+    // Trasmette in tempo reale a TUTTI i client collegati (compresa Cucina)
     io.emit('nuovo_ordine', orderData);
   });
 
-  // Gestione aggiornamento stato ordine dalla cucina
+  // Aggiornamento stato dalla cucina
   socket.on('aggiorna_stato', ({ id, stato }) => {
     const ordini = leggiOrdini();
     const ordine = ordini.find(o => o.id === id);
@@ -67,11 +70,11 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    console.log('Client disconnesso:', socket.id);
+    console.log('❌ Client disconnesso:', socket.id);
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server Pizzeria Alchimia avviato sulla porta ${PORT}`);
+  console.log(`🚀 Server avviato correttamente sulla porta ${PORT}`);
 });
