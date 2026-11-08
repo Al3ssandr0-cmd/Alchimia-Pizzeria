@@ -23,14 +23,9 @@
     h1 { color: var(--accent); font-size: 1.8rem; }
     .status-badge { background: #166534; color: #4ade80; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
 
-    /* Layout Principale a 2 colonne grandi: Cucina e Cassa */
     .main-container { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    @media (max-width: 1024px) { .main-container { grid-template-columns: 1fr; } }
 
-    @media (max-width: 1024px) {
-      .main-container { grid-template-columns: 1fr; }
-    }
-
-    /* Sezione Cucina (divisa in Tavoli e Asporto) */
     .kitchen-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     @media (max-width: 600px) { .kitchen-columns { grid-template-columns: 1fr; } }
 
@@ -47,7 +42,6 @@
     .order-items li { font-size: 1rem; padding: 3px 0; border-bottom: 1px dashed #334155; }
     .order-notes { background: #0f172a; padding: 8px; border-radius: 6px; font-size: 0.85rem; color: #fbbf24; margin-bottom: 10px; }
 
-    /* Sezione Cassa / Conto Tavoli */
     .cassa-box { background: var(--card-bg); border-radius: 12px; padding: 20px; border: 2px solid var(--success); position: sticky; top: 15px; height: fit-content; }
     .cassa-box h2 { color: var(--success); font-size: 1.4rem; margin-bottom: 15px; text-align: center; }
     
@@ -65,39 +59,27 @@
 <body>
 
   <header>
-    <h1>🍕 Pizzeria Alchimia - Dashboard</h1>
+    <h1>🍕 Pizzeria Alchimia - Dashboard Cucina</h1>
     <span class="status-badge" id="statusBadge">🟢 Connesso al Server</span>
   </header>
 
   <div class="main-container">
     
-    <!-- COLONNA CUCINA (Divida in Ordini Tavolo e Ordini Asporto) -->
     <div>
       <div class="kitchen-columns">
-        
-        <!-- COLONNA 1: TAVOLI -->
         <div>
           <div class="column-title title-tavoli">🍽️ Ordini Tavoli (Sala)</div>
-          <div id="listaOrdiniTavoli">
-            <!-- Gli ordini del locale compaiono qui -->
-          </div>
+          <div id="listaOrdiniTavoli"></div>
         </div>
-
-        <!-- COLONNA 2: ASPORTO E DOMICILIO -->
         <div>
           <div class="column-title title-asporto">📦 Asporto / Domicilio</div>
-          <div id="listaOrdiniAsporto">
-            <!-- Gli ordini d'asporto compaiono qui -->
-          </div>
+          <div id="listaOrdiniAsporto"></div>
         </div>
-
       </div>
     </div>
 
-    <!-- COLONNA CASSA: CONTO TAVOLO -->
     <div class="cassa-box">
       <h2>💶 Cassa & Conto Tavoli</h2>
-      
       <label style="font-size: 0.9rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Seleziona Tavolo per il Conto:</label>
       <select class="select-tavolo" id="cassaSelectTavolo" onchange="calcolaContoTavolo()">
         <option value="">-- Scegli Tavolo --</option>
@@ -121,25 +103,31 @@
   </div>
 
   <script>
-    const socket = io();
+    // Connessione Socket.io sicura e assoluta verso Render
+    const SOCKET_URL = window.location.origin.includes('onrender.com') 
+      ? window.location.origin 
+      : 'https://alchimia-pizzeria.onrender.com';
+
+    const socket = io(SOCKET_URL, { transports: ['websocket', 'polling'] });
     let tuttiGliOrdini = [];
 
     socket.on('connect', () => {
       document.getElementById('statusBadge').innerText = '🟢 Connesso al Server';
+      console.log('✅ Cucina connessa a Socket.io, ID:', socket.id);
     });
 
     socket.on('disconnect', () => {
       document.getElementById('statusBadge').innerText = '🔴 Disconnesso';
     });
 
-    // Ricezione di tutti gli ordini esistenti
-    socket.on('carica_ordini', (ordini) => {
+    // Ricezione della lista completa degli ordini dal server (evento emesso dal server.js all'avvio)
+    socket.on('lista_ordini', (ordini) => {
       tuttiGliOrdini = ordini;
       renderizzaSchermata();
     });
 
-    // Ricezione di un singolo nuovo ordine
-    socket.on('nuovo_ordine_cucina', (ordine) => {
+    // Ricezione di un singolo nuovo ordine in tempo reale
+    socket.on('nuovo_ordine', (ordine) => {
       tuttiGliOrdini.push(ordine);
       renderizzaSchermata();
     });
@@ -155,9 +143,11 @@
         const isTavolo = ord.table && ord.table.toLowerCase().includes('tavolo');
 
         let itemsHtml = '<ul class="order-items">';
-        ord.items.forEach(it => {
-          itemsHtml += `<li><strong>1x</strong> ${it.name} (€${it.price.toFixed(2)})</li>`;
-        });
+        if (ord.items && Array.isArray(ord.items)) {
+          ord.items.forEach(it => {
+            itemsHtml += `<li><strong>1x</strong> ${it.name} (€${(it.price || 0).toFixed(2)})</li>`;
+          });
+        }
         itemsHtml += '</ul>';
 
         const orderCard = document.createElement('div');
@@ -165,7 +155,7 @@
         orderCard.innerHTML = `
           <div class="order-header">
             <span>${ord.table}</span>
-            <span style="font-size:0.85rem; color:var(--accent);">${ord.time}</span>
+            <span style="font-size:0.85rem; color:var(--accent);">${ord.time || ''}</span>
           </div>
           ${itemsHtml}
           ${ord.notes ? `<div class="order-notes">📝 ${ord.notes}</div>` : ''}
@@ -179,7 +169,6 @@
         }
       });
 
-      // Aggiorna anche il riepilogo cassa se c'è un tavolo selezionato
       calcolaContoTavolo();
     }
 
@@ -192,7 +181,6 @@
         return;
       }
 
-      // Filtra tutti gli ordini associati a questo tavolo
       const ordiniTavolo = tuttiGliOrdini.filter(o => o.table === tavoloSelezionato);
 
       if (ordiniTavolo.length === 0) {
@@ -204,15 +192,17 @@
       let html = `<h3 style="color:var(--table-color); margin-bottom:10px;">${tavoloSelezionato}</h3>`;
 
       ordiniTavolo.forEach(ord => {
-        ord.items.forEach(it => {
-          totaleConto += it.price;
-          html += `
-            <div class="conto-item">
-              <span>${it.name}</span>
-              <span>€ ${it.price.toFixed(2)}</span>
-            </div>
-          `;
-        });
+        if (ord.items && Array.isArray(ord.items)) {
+          ord.items.forEach(it => {
+            totaleConto += (it.price || 0);
+            html += `
+              <div class="conto-item">
+                <span>${it.name}</span>
+                <span>€ ${(it.price || 0).toFixed(2)}</span>
+              </div>
+            `;
+          });
+        }
       });
 
       html += `<div class="conto-totale">Totale: € ${totaleConto.toFixed(2)}</div>`;
@@ -227,7 +217,6 @@
       }
 
       if (confirm(`Confermi di aver incassato il conto per ${tavoloSelezionato}? Gli ordini di questo tavolo verranno liberati.`)) {
-        // Rimuove tutti gli ordini di quel tavolo
         tuttiGliOrdini = tuttiGliOrdini.filter(o => o.table !== tavoloSelezionato);
         renderizzaSchermata();
         document.getElementById('cassaSelectTavolo').value = '';
