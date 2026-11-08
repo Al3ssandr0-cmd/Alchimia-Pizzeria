@@ -7,7 +7,7 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 
-// Inizializzazione Socket.io con CORS totalmente aperto
+// Inizializzazione Socket.io
 const io = new Server(server, {
   cors: {
     origin: "*",
@@ -16,7 +16,9 @@ const io = new Server(server, {
 });
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Serve i file HTML direttamente dalla radice principale (__dirname)
+app.use(express.static(__dirname));
 
 const ORDINI_FILE = path.join(__dirname, 'ordini.json');
 
@@ -41,20 +43,20 @@ function salvaOrdini(ordini) {
 }
 
 io.on('connection', (socket) => {
-  console.log('⚡ Un client si è connesso! ID:', socket.id);
+  console.log('⚡ Client connesso:', socket.id);
 
-  // Invia subito la lista ordini alla connessione
+  // Invia gli ordini alla connessione (es. monitor cucina)
   socket.emit('lista_ordini', leggiOrdini());
 
-  // Ricezione ordine da Menu o Asporto
+  // Ricezione ordine da menu.html o asporto.html
   socket.on('nuovo_ordine', (orderData) => {
-    console.log('📩 Nuovo ordine ricevuto:', orderData.id);
+    console.log('📩 Ordine ricevuto:', orderData.id);
     
     const ordini = leggiOrdini();
     ordini.push(orderData);
     salvaOrdini(ordini);
 
-    // Trasmette in tempo reale a TUTTI i client collegati (compresa Cucina)
+    // Inoltra l'ordine a tutti (cucina inclusa)
     io.emit('nuovo_ordine', orderData);
   });
 
@@ -76,5 +78,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Server avviato correttamente sulla porta ${PORT}`);
+  console.log(`🚀 Server avviato sulla porta ${PORT}`);
 });
